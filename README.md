@@ -17,6 +17,10 @@ Metodi di pagamento
   "message": "Payment method added successfully.",
   "payment_method_id": "98765"
 }
+{
+  "status": "failure",
+  "message": "Failed to add payment method. Please check your details."
+}
 
 Database (Informazioni sugli utenti)
 {
@@ -35,6 +39,11 @@ Database (Informazioni sugli utenti)
     }
   }
 }
+{
+  "status": "failure",
+  "message": "User not found."
+}
+
 
 Capacità di prenotazione
 {
@@ -49,6 +58,11 @@ Capacità di prenotazione
   "message": "Session booked successfully.",
   "booking_id": "bk00123"
 }
+{
+  "status": "failure",
+  "message": "Unable to book session. Specialist may be unavailable."
+}
+
 Prenotazione di giorni e orari disponibili
 {
   "action": "get_available_slots",
@@ -63,6 +77,11 @@ Prenotazione di giorni e orari disponibili
     "17:30"
   ]
 }
+{
+  "status": "failure",
+  "message": "No available slots found for the selected date."
+}
+
 Sincronizzazione dei dati
 {
   "action": "sync_data",
@@ -82,6 +101,15 @@ Sincronizzazione dei dati
     ]
   }
 }
+{
+  "status": "success",
+  "message": "Data synchronized successfully."
+}
+{
+  "status": "failure",
+  "message": "Failed to sync data. Please try again later."
+}
+
 Notifiche e promemoria
 {
   "action": "send_notification",
@@ -95,6 +123,11 @@ Notifiche e promemoria
   "status": "success",
   "message": "Notification sent successfully."
 }
+{
+  "status": "failure",
+  "message": "Failed to send notification. Please check your settings."
+}
+
 Pagina di supporto
 {
   "action": "get_support_info"
@@ -107,6 +140,11 @@ Pagina di supporto
     "contact_email": "support@example.com"
   }
 }
+{
+  "status": "failure",
+  "message": "Failed to retrieve support information."
+}
+
 Registrazione e login
 {
   "action": "register_user",
@@ -121,6 +159,11 @@ Registrazione e login
   "message": "User registered successfully.",
   "user_id": "12345"
 }
+{
+  "status": "failure",
+  "message": "Registration failed. Please check your input."
+}
+
 Modifica delle prenotazioni
 {
   "action": "update_booking",
@@ -132,6 +175,11 @@ Modifica delle prenotazioni
   "status": "success",
   "message": "Booking updated successfully."
 }
+{
+  "status": "failure",
+  "message": "Failed to update booking. Specialist may be unavailable."
+}
+
 Scelta dello specialista
 {
   "action": "get_specialist_list",
@@ -157,6 +205,11 @@ Scelta dello specialista
     }
   ]
 }
+{
+  "status": "failure",
+  "message": "No specialists found matching your criteria."
+}
+
 Abbonamento annuale/mensile
 {
   "action": "subscribe",
@@ -169,6 +222,11 @@ Abbonamento annuale/mensile
   "message": "Subscription activated successfully.",
   "subscription_id": "sub00123"
 }
+{
+  "status": "failure",
+  "message": "Failed to activate subscription. Please check your payment method."
+}
+
 Musica di meditazione personalizzata
 {
   "action": "get_meditation_music",
@@ -190,6 +248,11 @@ Musica di meditazione personalizzata
     }
   ]
 }
+{
+  "status": "failure",
+  "message": "Failed to retrieve music. Please try again."
+}
+
 Gestione delle recensioni e feedback dei clienti
 {
   "action": "submit_review",
@@ -202,6 +265,11 @@ Gestione delle recensioni e feedback dei clienti
   "status": "success",
   "message": "Review submitted successfully."
 }
+{
+  "status": "failure",
+  "message": "Failed to submit review. Please try again."
+}
+
 Cronologia ordini
 {
   "action": "get_order_history",
@@ -222,6 +290,11 @@ Cronologia ordini
     }
   ]
 }
+{
+  "status": "failure",
+  "message": "Failed to retrieve order history."
+}
+
 Selezione del tempo di ritiro
 {
   "action": "select_pickup_time",
@@ -232,6 +305,11 @@ Selezione del tempo di ritiro
   "status": "success",
   "message": "Pickup time selected successfully."
 }
+{
+  "status": "failure",
+  "message": "Failed to select pickup time. Please try again."
+}
+
 Valuta digitale scalabile
 {
   "action": "redeem_digital_currency",
@@ -243,6 +321,11 @@ Valuta digitale scalabile
   "message": "50 digital credits redeemed.",
   "remaining_balance": 150
 }
+{
+  "status": "failure",
+  "message": "Failed to redeem digital currency. Insufficient balance."
+}
+
 Sistema di suggerimenti intelligenti
 {
   "action": "get_suggestions",
@@ -269,3 +352,8 @@ Sistema di suggerimenti intelligenti
   "status": "success",
   "message": "Data synchronized successfully."
 }
+{
+  "status": "failure",
+  "message": "Failed to retrieve suggestions. Please try again."
+}
+
