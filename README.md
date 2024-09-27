@@ -1,2 +1,271 @@
 # Serenity
 Progetto schul
+Metodi di pagamento
+{
+  "action": "add_payment_method",
+  "user_id": "12345",
+  "payment_method": {
+    "type": "credit_card",
+    "card_number": "4111111111111111",
+    "expiry_date": "12/25",
+    "cvv": "123"
+  }
+}
+
+{
+  "status": "success",
+  "message": "Payment method added successfully.",
+  "payment_method_id": "98765"
+}
+
+Database (Informazioni sugli utenti)
+{
+  "action": "get_user_info",
+  "user_id": "12345"
+}
+
+{
+  "status": "success",
+  "user_info": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "preferences": {
+      "meditation_music": "relaxing",
+      "specialist_preference": "cognitive_behavioral"
+    }
+  }
+}
+
+Capacità di prenotazione
+{
+  "action": "book_session",
+  "user_id": "12345",
+  "specialist_id": "sp5678",
+  "date": "2024-10-05",
+  "time": "15:00"
+}
+{
+  "status": "success",
+  "message": "Session booked successfully.",
+  "booking_id": "bk00123"
+}
+Prenotazione di giorni e orari disponibili
+{
+  "action": "get_available_slots",
+  "specialist_id": "sp5678",
+  "date": "2024-10-05"
+}
+{
+  "status": "success",
+  "available_slots": [
+    "14:00",
+    "16:00",
+    "17:30"
+  ]
+}
+Sincronizzazione dei dati
+{
+  "action": "sync_data",
+  "user_id": "12345",
+  "data": {
+    "preferences": {
+      "meditation_music": "relaxing",
+      "specialist_preference": "cognitive_behavioral"
+    },
+    "bookings": [
+      {
+        "booking_id": "bk00123",
+        "specialist_id": "sp5678",
+        "date": "2024-10-05",
+        "time": "15:00"
+      }
+    ]
+  }
+}
+Notifiche e promemoria
+{
+  "action": "send_notification",
+  "user_id": "12345",
+  "notification": {
+    "type": "reminder",
+    "message": "You have a session booked with Dr. Smith on 2024-10-05 at 15:00."
+  }
+}
+{
+  "status": "success",
+  "message": "Notification sent successfully."
+}
+Pagina di supporto
+{
+  "action": "get_support_info"
+}
+{
+  "status": "success",
+  "support_info": {
+    "faq_url": "https://app.example.com/faq",
+    "live_chat_url": "https://app.example.com/support/chat",
+    "contact_email": "support@example.com"
+  }
+}
+Registrazione e login
+{
+  "action": "register_user",
+  "user_data": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "securepassword"
+  }
+}
+{
+  "status": "success",
+  "message": "User registered successfully.",
+  "user_id": "12345"
+}
+Modifica delle prenotazioni
+{
+  "action": "update_booking",
+  "booking_id": "bk00123",
+  "new_date": "2024-10-06",
+  "new_time": "14:00"
+}
+{
+  "status": "success",
+  "message": "Booking updated successfully."
+}
+Scelta dello specialista
+{
+  "action": "get_specialist_list",
+  "criteria": {
+    "expertise": "cognitive_behavioral",
+    "availability": "2024-10-05"
+  }
+}
+{
+  "status": "success",
+  "specialists": [
+    {
+      "specialist_id": "sp5678",
+      "name": "Dr. Jane Smith",
+      "rating": 4.8,
+      "available_slots": ["14:00", "15:00"]
+    },
+    {
+      "specialist_id": "sp9012",
+      "name": "Dr. Tom Adams",
+      "rating": 4.6,
+      "available_slots": ["16:00"]
+    }
+  ]
+}
+Abbonamento annuale/mensile
+{
+  "action": "subscribe",
+  "user_id": "12345",
+  "plan": "monthly",
+  "payment_method_id": "98765"
+}
+{
+  "status": "success",
+  "message": "Subscription activated successfully.",
+  "subscription_id": "sub00123"
+}
+Musica di meditazione personalizzata
+{
+  "action": "get_meditation_music",
+  "user_id": "12345",
+  "preference": "relaxing"
+}
+{
+  "status": "success",
+  "music_playlist": [
+    {
+      "track_id": "track001",
+      "title": "Relaxing Ocean Waves",
+      "url": "https://app.example.com/music/track001"
+    },
+    {
+      "track_id": "track002",
+      "title": "Calm Breeze",
+      "url": "https://app.example.com/music/track002"
+    }
+  ]
+}
+Gestione delle recensioni e feedback dei clienti
+{
+  "action": "submit_review",
+  "user_id": "12345",
+  "specialist_id": "sp5678",
+  "rating": 5,
+  "comment": "Excellent session, very helpful!"
+}
+{
+  "status": "success",
+  "message": "Review submitted successfully."
+}
+Cronologia ordini
+{
+  "action": "get_order_history",
+  "user_id": "12345"
+}
+{
+  "status": "success",
+  "order_history": [
+    {
+      "order_id": "order001",
+      "item": "Relaxation Package",
+      "date": "2024-09-15"
+    },
+    {
+      "order_id": "order002",
+      "item": "CBT Session",
+      "date": "2024-10-01"
+    }
+  ]
+}
+Selezione del tempo di ritiro
+{
+  "action": "select_pickup_time",
+  "order_id": "order001",
+  "pickup_time": "17:00"
+}
+{
+  "status": "success",
+  "message": "Pickup time selected successfully."
+}
+Valuta digitale scalabile
+{
+  "action": "redeem_digital_currency",
+  "user_id": "12345",
+  "amount": 50
+}
+{
+  "status": "success",
+  "message": "50 digital credits redeemed.",
+  "remaining_balance": 150
+}
+Sistema di suggerimenti intelligenti
+{
+  "action": "get_suggestions",
+  "user_id": "12345",
+  "based_on": "previous_sessions"
+}
+{
+  "status": "success",
+  "suggestions": [
+    {
+      "specialist_id": "sp5678",
+      "suggested_service": "Mindfulness Meditation",
+      "rating": 4.9
+    },
+    {
+      "specialist_id": "sp9012",
+      "suggested_service": "CBT Session",
+      "rating": 4.7
+    }
+  ]
+}
+
+{
+  "status": "success",
+  "message": "Data synchronized successfully."
+}
