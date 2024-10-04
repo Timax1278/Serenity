@@ -145,24 +145,29 @@ Pagina di supporto
   "message": "Failed to retrieve support information."
 }
 
-Registrazione e login
 {
   "action": "register_user",
   "user_data": {
     "name": "John Doe",
     "email": "john@example.com",
-    "password": "securepassword"
-  }
+    "password": "securepassword",
+    "phone": "1234567890",
+    "birth_year": "1990",
+    "role": "user"
+  },
+  "responses": [
+    {
+      "status": "success",
+      "message": "User registered successfully.",
+      "user_id": "12345"
+    },
+    {
+      "status": "failure",
+      "message": "Registration failed. Please check your input."
+    }
+  ]
 }
-{
-  "status": "success",
-  "message": "User registered successfully.",
-  "user_id": "12345"
-}
-{
-  "status": "failure",
-  "message": "Registration failed. Please check your input."
-}
+
 
 Modifica delle prenotazioni
 {
