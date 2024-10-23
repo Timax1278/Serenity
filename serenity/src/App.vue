@@ -1,9 +1,12 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view/>
+  <div id="app">
+    <nav>
+      <router-link to="/">Home</router-link> |
+      <router-link to="/about">About</router-link> |
+      <router-link to="/login">Login</router-link> <!-- Aggiungi il link alla pagina di login -->
+    </nav>
+    <router-view/> <!-- Questo visualizza le pagine corrispondenti alle rotte -->
+  </div>
 </template>
 
 <style>
