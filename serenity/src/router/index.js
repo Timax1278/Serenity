@@ -1,30 +1,33 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import LoginForm from '../components/UserLogin.vue' // Importa il componente LoginForm
+import LandingPage from '../views/LandingPage.vue' // Importa la LandingPage
+import LoginForm from '../components/UserLogin.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'home',
-    component: HomeView
+    name: 'landing',
+    component: LandingPage // Imposta la LandingPage come pagina principale
   },
   {
     path: '/about',
     name: 'about',
-    // Lazy loading della pagina About
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
   },
   {
     path: '/login',
     name: 'login',
-    component: LoginForm // Aggiungi il percorso del LoginForm
+    component: LoginForm
   },
   {
     path: '/dashboard',
     name: 'dashboard',
-    // Lazy loading della dashboard (pagina protetta)
     component: () => import(/* webpackChunkName: "dashboard" */ '../views/DashboardView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import(/* webpackChunkName: "register" */ '../components/UserRegister.vue') // Aggiungi il percorso per la registrazione
   }
 ]
 
@@ -35,7 +38,7 @@ const router = createRouter({
 
 // Protezione delle route
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('user') // Controlla se l'utente è autenticato
+  const isAuthenticated = !!localStorage.getItem('user')
 
   if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
     next({ name: 'login' })
