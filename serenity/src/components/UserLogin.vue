@@ -30,18 +30,18 @@
       </form>
     </div>
 
-    <!-- Indicatore di caricamento -->
     <div v-if="loading" class="loading-spinner">
       <div class="spinner"></div>
       <p>Logging in...</p>
     </div>
 
-    <!-- Stelle generate casualmente -->
     <div class="stars-container" ref="starsContainer"></div>
   </div>
 </template>
 
 <script>
+import axios from 'axios' // Import axios for making HTTP requests
+
 export default {
   name: 'LoginForm',
   data () {
@@ -56,31 +56,41 @@ export default {
     this.generateStars()
   },
   methods: {
-    submitForm () {
+    async submitForm () {
       this.loading = true
-      setTimeout(() => {
-        if (this.email === 'test@example.com' && this.password === 'password') {
-          alert('Login successful!')
-          localStorage.setItem('user', JSON.stringify({ email: this.email }))
-          this.$router.push('/dashboard')
+      this.errorMessage = '' // Clear any previous error message
+
+      try {
+        // Make a POST request to the login endpoint
+        const response = await axios.post('http://localhost:3000/login', {
+          email: this.email,
+          password: this.password
+        })
+
+        // Handle successful login
+        alert(response.data.message) // Show success message
+        localStorage.setItem('token', response.data.token) // Save the token in local storage
+        this.$router.push('/dashboard') // Redirect to dashboard
+      } catch (error) {
+        if (error.response) {
+          this.errorMessage = error.response.data.message // Set error message from the response
         } else {
-          this.errorMessage = 'Invalid email or password'
+          this.errorMessage = 'Login failed. Please try again.' // Generic error message
         }
-        this.loading = false
-      }, 2000)
+      } finally {
+        this.loading = false // Reset loading state
+      }
     },
     generateStars () {
-      const starContainer = this.$refs.starsContainer // Usare il ref per accedere al contenitore delle stelle
+      const starContainer = this.$refs.starsContainer
       for (let i = 0; i < 100; i++) {
         const star = document.createElement('div')
         star.className = 'star'
-        // Posizioni casuali
         star.style.top = `${Math.random() * 100}vh`
         star.style.left = `${Math.random() * 100}vw`
-        // Dimensioni casuali
         star.style.width = `${Math.random() * 4 + 2}px`
-        star.style.height = star.style.width // Mantiene la proporzione
-        star.style.animationDelay = `${Math.random() * 2}s` // Ritardo casuale per l'animazione
+        star.style.height = star.style.width
+        star.style.animationDelay = `${Math.random() * 2}s`
         starContainer.appendChild(star)
       }
     }
