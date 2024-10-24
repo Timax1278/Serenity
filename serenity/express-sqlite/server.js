@@ -1,9 +1,8 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const app = express();
-const cors = require('cors')
+const cors = require('cors');
 const port = 3000;
 
 const SECRET_KEY = 'supersecretkey'; // Chiave segreta per firmare i token
@@ -16,7 +15,7 @@ let db = new sqlite3.Database('./database.db', (err) => {
 });
 
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 
 // Creazione della tabella utenti se non esiste
 db.run(`
@@ -46,18 +45,17 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Endpoint POST per registrare un nuovo utente
-app.post('/register', async (req, res) => {
+app.post('/register', (req, res) => {
     const { nome, email, password } = req.body;
 
     // Verifica se l'email è già in uso
-    db.get("SELECT * FROM utenti WHERE email = ?", [email], async (err, row) => {
+    db.get("SELECT * FROM utenti WHERE email = ?", [email], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (row) return res.status(400).json({ message: "Email già in uso" });
 
-        // Hash della password e inserimento dell'utente
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Inserimento dell'utente senza hashing della password
         db.run("INSERT INTO utenti (nome, email, password) VALUES (?, ?, ?)",
-            [nome, email, hashedPassword],
+            [nome, email, password],
             function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ message: 'Registrazione avvenuta con successo', id: this.lastID });
@@ -69,12 +67,12 @@ app.post('/register', async (req, res) => {
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
 
-    db.get("SELECT * FROM utenti WHERE email = ?", [email], async (err, user) => {
+    db.get("SELECT * FROM utenti WHERE email = ?", [email], (err, user) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!user) return res.status(400).json({ message: "Utente non trovato" });
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Password errata" });
+        // Verifica diretta della password senza hashing
+        if (user.password !== password) return res.status(400).json({ message: "Password errata" });
 
         // Genera un token JWT per l'utente
         const token = generateToken(user);
