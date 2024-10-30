@@ -1,20 +1,31 @@
 **# Serenity**
-
-Davydov Tymofiy
-
+-----------------------------------------------------------------------------------------------------------------
+**Davydov Tymofiy**
+-----------------------------------------------------------------------------------------------------------------
 Descrizione: L'idea consiste nel creare una piattaforma dedicata alla salute mentale degli adolescenti, che offra servizi su misura come terapia, meditazione guidata, risorse per la salute mentale e uno spazio sociale sicuro dove i ragazzi possano connettersi tra loro. La piattaforma potrebbe fornire un approccio olistico al benessere mentale, concentrandosi su supporto emotivo, gestione dello stress e sviluppo di meccanismi di coping sani, attraverso l'aiuto di professionisti e il supporto tra pari. Un'app che offre meditazione guidata, spazi sicuri di discussione e la possibilità di accedere a terapie personalizzate con specialisti, aiutando gli adolescenti a gestire lo stress e migliorare il loro benessere emotivo.
 
-Target: Adolescenti / Genitori / Tutor / Insegnanti / Professionisti del settore / Istituti Scolastici
+**Target**
+-----------------------------------------------------------------------------------------------------------------
+Adolescenti / Genitori / Tutor / Insegnanti / Professionisti del settore / Istituti Scolastici
 
-Problema: La piattaforma si propone di essere un faro di speranza e supporto, contribuendo a migliorare il benessere mentale dei giovani e a costruire una comunità più consapevole e solidale.
+**Problema**
+-----------------------------------------------------------------------------------------------------------------
+La piattaforma si propone di essere un faro di speranza e supporto, contribuendo a migliorare il benessere mentale dei giovani e a costruire una comunità più consapevole e solidale.
 
-Competitor: HeadSpace, Calm, TalkSpace, BetterHelp, Woebot, Sanvello, Moodfit, MyTherapy, 7 Cups, Breathe, Ned, Your Mental Health Canada 
+**Competitor**
+-----------------------------------------------------------------------------------------------------------------
+HeadSpace, Calm, TalkSpace, BetterHelp, Woebot, Sanvello, Moodfit, MyTherapy, 7 Cups, Breathe, Ned, Your Mental Health Canada 
 
-Tecnologie: HTML, CSS, JavaScript, 
+**Tecnologie**
+-----------------------------------------------------------------------------------------------------------------
+HTML, CSS, JavaScript, 
 
-Timestamp: 1726737865509
+**Timestamp**
+-----------------------------------------------------------------------------------------------------------------
+1726737865509
 
-Requisiti Funzionali
+**Requisiti Funzionali**
+-----------------------------------------------------------------------------------------------------------------
 I requisiti funzionali definiscono cosa il sistema deve fare per soddisfare le esigenze degli utenti.
 
 1. Gestione dei Metodi di Pagamento
@@ -56,9 +67,9 @@ Suggerire automaticamente servizi basati sulle preferenze e cronologia dell'uten
 Offrire la possibilità di visualizzare i contenuti del menu o delle opzioni di meditazione anche offline, con sincronizzazione degli ordini una volta tornati online.
 18. Multi-profilo
 Consentire a un singolo account di gestire più profili, ciascuno con preferenze individuali, per l’utilizzo di più utenti (ad es. per una famiglia).
-Requisiti Non Funzionali
-I requisiti non funzionali specificano come il sistema deve operare, focalizzandosi su aspetti come prestazioni, sicurezza e usabilità.
 
+**Requisiti Non Funzionali**
+------------------------------------------------------------------------------------------------------------------
 Sicurezza
 
 Tutti i dati sensibili devono essere criptati, e il sistema deve seguire le normative sulla protezione dei dati come il GDPR.
