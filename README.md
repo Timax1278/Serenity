@@ -126,6 +126,9 @@ Interfaccia Localizzata
 La piattaforma deve supportare più lingue e adattarsi culturalmente ai diversi contesti dei suoi utenti per favorire un uso inclusivo e accessibile a tutti.
 
 -----------------------------------------------------------------------------------------------------------------
+![pnggg](https://github.com/user-attachments/assets/c3f0bd33-1c10-46c5-9bca-f704401c9543)
+-----------------------------------------------------------------------------------------------------------------
+
 
 
 Progetto schul
