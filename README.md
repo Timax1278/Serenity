@@ -27,45 +27,44 @@ HTML, CSS, JavaScript,
 **Requisiti Funzionali**
 -----------------------------------------------------------------------------------------------------------------
 I requisiti funzionali definiscono cosa il sistema deve fare per soddisfare le esigenze degli utenti.
-
-1. Gestione dei Metodi di Pagamento
+Gestione dei Metodi di Pagamento
 Permettere agli utenti di aggiungere, modificare e rimuovere metodi di pagamento (carte di credito, debito, PayPal, abbonamenti).
 Verifica e convalida dei metodi di pagamento per transazioni sicure.
-2. Database e Gestione dei Dati
+Database e Gestione dei Dati
 Memorizzazione e gestione centralizzata delle informazioni relative agli utenti, agli specialisti, alle prenotazioni e alle preferenze personali.
 Accesso sicuro e conforme alle normative GDPR.
-3. Prenotazione delle Sessioni
+Prenotazione delle Sessioni
 Consentire agli utenti di visualizzare e prenotare sessioni direttamente dall'app con i professionisti disponibili.
 Disponibilità di visualizzare orari e giorni liberi per prevenire doppie prenotazioni o conflitti di agenda.
-4. Sincronizzazione dei Dati
+Sincronizzazione dei Dati
 Sincronizzazione in tempo reale tra le informazioni degli utenti, dei professionisti e del sistema di gestione per mantenere aggiornati tutti i dati relativi alle prenotazioni e alle preferenze.
-5. Notifiche e Promemoria
+Notifiche e Promemoria
 Inviare notifiche e promemoria agli utenti per ricordare loro gli appuntamenti programmati, incluse le informazioni su giorno, ora e specialista.
-6. Supporto e Assistenza Clienti
+Supporto e Assistenza Clienti
 Fornire una sezione dedicata al supporto, con FAQ, live chat e opzioni di contatto per richieste generali o assistenza tecnica.
-7. Registrazione e Login
+Registrazione e Login
 Consentire la registrazione sicura degli utenti e l’accesso con conservazione delle preferenze e della cronologia delle prenotazioni.
-8. Modifica delle Prenotazioni
+Modifica delle Prenotazioni
 Permettere agli utenti di modificare le prenotazioni esistenti (anticipare o posticipare), rispettando la disponibilità del professionista scelto.
-9. Selezione dello Specialista
+Selezione dello Specialista
 Consentire agli utenti di scegliere uno specialista basato su criteri specifici come competenze, recensioni e disponibilità.
-10. Gestione degli Abbonamenti
+Gestione degli Abbonamenti
 Offrire piani di abbonamento mensili o annuali per l’accesso a servizi premium o a un numero prestabilito di sessioni.
-11. Personalizzazione della Musica di Meditazione
+Personalizzazione della Musica di Meditazione
 Adattare la musica di meditazione in base ai gusti e preferenze dell'utente.
-12. Recensioni e Feedback
+Recensioni e Feedback
 Consentire agli utenti di lasciare recensioni e feedback per i servizi ricevuti, e visualizzare le valutazioni di altri utenti.
-13. Cronologia Ordini e Prenotazioni
+Cronologia Ordini e Prenotazioni
 Fornire agli utenti la possibilità di visualizzare cronologia degli ordini e delle prenotazioni per ripetere facilmente i servizi precedentemente selezionati.
-14. Selezione dell’Orario di Ritiro
+Selezione dell’Orario di Ritiro
 Consentire agli utenti di scegliere un orario di ritiro per eventuali ordini (ad esempio, per servizi acquistati da ritirare in sede).
-15. Valuta Digitale Scalabile
+Valuta Digitale Scalabile
 Sistema di valuta digitale che cresce in base alla frequenza di utilizzo dell’app o eventi promozionali, per incentivare la fidelizzazione.
-16. Sistema di Suggerimenti Intelligenti
+Sistema di Suggerimenti Intelligenti
 Suggerire automaticamente servizi basati sulle preferenze e cronologia dell'utente.
-17. Modalità Offline
+Modalità Offline
 Offrire la possibilità di visualizzare i contenuti del menu o delle opzioni di meditazione anche offline, con sincronizzazione degli ordini una volta tornati online.
-18. Multi-profilo
+Multi-profilo
 Consentire a un singolo account di gestire più profili, ciascuno con preferenze individuali, per l’utilizzo di più utenti (ad es. per una famiglia).
 
 **Requisiti Non Funzionali**
