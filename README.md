@@ -1,5 +1,120 @@
-# Serenity
+**# Serenity**
+
+Davydov Tymofiy
+
+Descrizione: L'idea consiste nel creare una piattaforma dedicata alla salute mentale degli adolescenti, che offra servizi su misura come terapia, meditazione guidata, risorse per la salute mentale e uno spazio sociale sicuro dove i ragazzi possano connettersi tra loro. La piattaforma potrebbe fornire un approccio olistico al benessere mentale, concentrandosi su supporto emotivo, gestione dello stress e sviluppo di meccanismi di coping sani, attraverso l'aiuto di professionisti e il supporto tra pari. Un'app che offre meditazione guidata, spazi sicuri di discussione e la possibilità di accedere a terapie personalizzate con specialisti, aiutando gli adolescenti a gestire lo stress e migliorare il loro benessere emotivo.
+
+Target: Adolescenti / Genitori / Tutor / Insegnanti / Professionisti del settore / Istituti Scolastici
+
+Problema: La piattaforma si propone di essere un faro di speranza e supporto, contribuendo a migliorare il benessere mentale dei giovani e a costruire una comunità più consapevole e solidale.
+
+Competitor: HeadSpace, Calm, TalkSpace, BetterHelp, Woebot, Sanvello, Moodfit, MyTherapy, 7 Cups, Breathe, Ned, Your Mental Health Canada 
+
+Tecnologie: HTML, CSS, JavaScript, 
+
+Timestamp: 1726737865509
+
+Requisiti Funzionali
+I requisiti funzionali definiscono cosa il sistema deve fare per soddisfare le esigenze degli utenti.
+
+1. Gestione dei Metodi di Pagamento
+Permettere agli utenti di aggiungere, modificare e rimuovere metodi di pagamento (carte di credito, debito, PayPal, abbonamenti).
+Verifica e convalida dei metodi di pagamento per transazioni sicure.
+2. Database e Gestione dei Dati
+Memorizzazione e gestione centralizzata delle informazioni relative agli utenti, agli specialisti, alle prenotazioni e alle preferenze personali.
+Accesso sicuro e conforme alle normative GDPR.
+3. Prenotazione delle Sessioni
+Consentire agli utenti di visualizzare e prenotare sessioni direttamente dall'app con i professionisti disponibili.
+Disponibilità di visualizzare orari e giorni liberi per prevenire doppie prenotazioni o conflitti di agenda.
+4. Sincronizzazione dei Dati
+Sincronizzazione in tempo reale tra le informazioni degli utenti, dei professionisti e del sistema di gestione per mantenere aggiornati tutti i dati relativi alle prenotazioni e alle preferenze.
+5. Notifiche e Promemoria
+Inviare notifiche e promemoria agli utenti per ricordare loro gli appuntamenti programmati, incluse le informazioni su giorno, ora e specialista.
+6. Supporto e Assistenza Clienti
+Fornire una sezione dedicata al supporto, con FAQ, live chat e opzioni di contatto per richieste generali o assistenza tecnica.
+7. Registrazione e Login
+Consentire la registrazione sicura degli utenti e l’accesso con conservazione delle preferenze e della cronologia delle prenotazioni.
+8. Modifica delle Prenotazioni
+Permettere agli utenti di modificare le prenotazioni esistenti (anticipare o posticipare), rispettando la disponibilità del professionista scelto.
+9. Selezione dello Specialista
+Consentire agli utenti di scegliere uno specialista basato su criteri specifici come competenze, recensioni e disponibilità.
+10. Gestione degli Abbonamenti
+Offrire piani di abbonamento mensili o annuali per l’accesso a servizi premium o a un numero prestabilito di sessioni.
+11. Personalizzazione della Musica di Meditazione
+Adattare la musica di meditazione in base ai gusti e preferenze dell'utente.
+12. Recensioni e Feedback
+Consentire agli utenti di lasciare recensioni e feedback per i servizi ricevuti, e visualizzare le valutazioni di altri utenti.
+13. Cronologia Ordini e Prenotazioni
+Fornire agli utenti la possibilità di visualizzare cronologia degli ordini e delle prenotazioni per ripetere facilmente i servizi precedentemente selezionati.
+14. Selezione dell’Orario di Ritiro
+Consentire agli utenti di scegliere un orario di ritiro per eventuali ordini (ad esempio, per servizi acquistati da ritirare in sede).
+15. Valuta Digitale Scalabile
+Sistema di valuta digitale che cresce in base alla frequenza di utilizzo dell’app o eventi promozionali, per incentivare la fidelizzazione.
+16. Sistema di Suggerimenti Intelligenti
+Suggerire automaticamente servizi basati sulle preferenze e cronologia dell'utente.
+17. Modalità Offline
+Offrire la possibilità di visualizzare i contenuti del menu o delle opzioni di meditazione anche offline, con sincronizzazione degli ordini una volta tornati online.
+18. Multi-profilo
+Consentire a un singolo account di gestire più profili, ciascuno con preferenze individuali, per l’utilizzo di più utenti (ad es. per una famiglia).
+Requisiti Non Funzionali
+I requisiti non funzionali specificano come il sistema deve operare, focalizzandosi su aspetti come prestazioni, sicurezza e usabilità.
+
+Sicurezza
+
+Tutti i dati sensibili devono essere criptati, e il sistema deve seguire le normative sulla protezione dei dati come il GDPR.
+Autenticazione a due fattori (2FA) per l’accesso degli utenti e per la gestione dei pagamenti.
+Prestazioni
+
+Il sistema deve garantire tempi di risposta rapidi per la visualizzazione della disponibilità degli specialisti e per la prenotazione delle sessioni (tempo di risposta inferiore a 2 secondi).
+Supporto per un alto numero di utenti simultanei, con un minimo del 95% di uptime per l'app.
+Affidabilità
+
+Backup giornaliero del database per evitare perdite di dati e ripristino in caso di guasti.
+Meccanismi di ripristino e failover in caso di interruzioni o problemi di connessione.
+Usabilità
+
+Interfaccia user-friendly e intuitiva, accessibile per utenti di tutte le età.
+Disponibilità dell’app su piattaforme mobili (iOS e Android) e versione web responsive.
+Scalabilità
+
+Il sistema deve essere scalabile per consentire l’aggiunta di nuovi utenti, specialisti e funzionalità in futuro.
+Compatibilità
+
+Compatibilità con i principali browser e dispositivi mobili per garantire un’esperienza uniforme.
+Manutenibilità
+
+Architettura del software modulare per facilitare l'aggiornamento delle funzionalità senza interruzioni significative del servizio.
+Requisiti di Dominio
+I requisiti di dominio definiscono i vincoli e le specifiche uniche legate al contesto di salute mentale e benessere.
+
+Normative sulla Privacy dei Dati Sanitari
+
+Il sistema deve rispettare normative sulla gestione dei dati sanitari degli utenti, come il GDPR e le leggi specifiche sulla privacy della salute (HIPAA per gli Stati Uniti, ove applicabile).
+Gli utenti devono poter visualizzare e scaricare i propri dati e richiederne la cancellazione in qualsiasi momento.
+Qualificazione degli Specialisti
+
+Solo professionisti qualificati con credenziali verificate possono registrarsi come specialisti e offrire sessioni sulla piattaforma.
+Revisione periodica delle credenziali dei professionisti da parte di un team dedicato per mantenere un alto standard di servizio.
+Limiti di Età e Consenso
+
+Gli utenti adolescenti devono ottenere il consenso dei genitori o del tutore per accedere alla piattaforma e prenotare sessioni.
+Implementazione di controlli sull'età e sulla conformità per gli utenti minorenni.
+Trattamenti e Servizi Personalizzati
+
+Le sessioni e i contenuti di meditazione devono essere personalizzati in base all’età, alle preferenze e alle esigenze specifiche di ogni utente.
+Monitoraggio costante della qualità dei servizi offerti, basato su feedback degli utenti e delle recensioni dei professionisti.
+Accesso Limitato a Determinate Funzioni
+
+Gli utenti minorenni possono accedere solo a specifici servizi in base a linee guida etiche e alle normative.
+Funzionalità di controllo parentale per gli account gestiti da famiglie o tutori.
+Incentivi per il Benessere
+
+Programmi e promozioni che incentivino pratiche di benessere mentale e supporto emotivo continuo, come valute digitali e abbonamenti, devono essere pensati per favorire il benessere e l’uso consapevole.
+Interfaccia Localizzata
+
+La piattaforma deve supportare più lingue e adattarsi culturalmente ai diversi contesti dei suoi utenti per favorire un uso inclusivo e accessibile a tutti.
 Progetto schul
+
 Metodi di pagamento
 {
   "action": "add_payment_method",
