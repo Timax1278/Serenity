@@ -124,6 +124,10 @@ Programmi e promozioni che incentivino pratiche di benessere mentale e supporto 
 Interfaccia Localizzata
 
 La piattaforma deve supportare più lingue e adattarsi culturalmente ai diversi contesti dei suoi utenti per favorire un uso inclusivo e accessibile a tutti.
+
+-----------------------------------------------------------------------------------------------------------------
+
+
 Progetto schul
 
 Metodi di pagamento
