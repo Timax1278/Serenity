@@ -6,6 +6,18 @@
       "role": "user",
       "age": 30,
       "_id": "1742331295409"
+    },
+    {
+      "name": "tuma",
+      "email": "tuma@gmail.com",
+      "password": "123123",
+      "_id": "1742407300930"
+    },
+    {
+      "name": "mama",
+      "email": "mama@gmail.com",
+      "password": "123123",
+      "_id": "1742407491446"
     }
   ]
 }
