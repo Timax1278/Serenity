@@ -1,11 +1,15 @@
-// BACKEND (Express.js)
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
 const cors = require('cors');
+const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Google OAuth client - Usa la variabile d'ambiente o un valore predefinito per test
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'YOUR-CLIENT-ID-HERE.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Setup middleware
 app.use(express.json());
@@ -117,6 +121,28 @@ dataStore.load().catch(err => {
   process.exit(1);
 });
 
+// Funzione per verificare il token Google
+async function verifyGoogleToken(token) {
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    return {
+      googleId: payload['sub'],
+      email: payload['email'],
+      name: payload['name'],
+      picture: payload['picture'],
+      verified: payload['email_verified']
+    };
+  } catch (error) {
+    console.error('Error verifying Google token:', error);
+    throw new Error('Invalid Google token');
+  }
+}
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ 
@@ -196,7 +222,13 @@ app.post('/api/users', async (req, res) => {
 
     // Insert the new user
     console.log("Creating new user with:", { name, email, password: "***" });
-    const newUser = await dataStore.insert('users', { name, email, password });
+    const newUser = await dataStore.insert('users', { 
+      name, 
+      email, 
+      password,
+      authProvider: 'local',
+      createdAt: new Date().toISOString()
+    });
     
     // Don't send the password back in the response
     const { password: _, ...userWithoutPassword } = newUser;
@@ -227,13 +259,15 @@ app.get('/api/users/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
+
 // Debug route
 app.get('/api/debug', (req, res) => {
   res.json({
     message: 'Debug endpoint working',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    headers: req.headers
+    headers: req.headers,
+    googleClientId: GOOGLE_CLIENT_ID ? 'Configured' : 'Not configured'
   });
 });
 
@@ -265,46 +299,225 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Start the server with improved logging for GitHub Codespaces
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server is running on port ${port}`);
-  
-  // Detect if running in GitHub Codespaces
-  const codespaceUrl = process.env.CODESPACE_NAME 
-    ? `https://${process.env.CODESPACE_NAME}-${port}.app.github.dev` 
-    : null;
-  
-  if (codespaceUrl) {
-    console.log(`Running in GitHub Codespaces`);
-    console.log(`Access your API at: ${codespaceUrl}`);
-  } else {
-    console.log(`Access your API at: http://localhost:${port}`);
+// Google authentication endpoint (semplice - accetta dati dal client)
+app.post('/api/google-auth', async (req, res) => {
+  try {
+    const { googleId, email, name, picture, isRegistration } = req.body;
+    
+    console.log("Received Google auth data:", { 
+      googleId: googleId ? "[PRESENT]" : "[MISSING]", 
+      email, 
+      name, 
+      picture: picture ? "[PRESENT]" : "[MISSING]",
+      isRegistration 
+    });
+    
+    if (!googleId || !email || !name) {
+      return res.status(400).json({ 
+        message: 'GoogleId, Email, and Name are required for Google authentication'
+      });
+    }
+    
+  // Check if user exists
+  let user = await dataStore.findOne('users', { email });
+    
+  // If user doesn't exist and this is a registration, create new user
+  if (!user && isRegistration) {
+    console.log("Creating new user with Google account:", { name, email, googleId });
+    
+    user = await dataStore.insert('users', {
+      name,
+      email,
+      googleId,
+      picture,
+      authProvider: 'google',
+      createdAt: new Date().toISOString()
+    });
+    
+    console.log("Google user created successfully:", user);
+  }
+  // If user doesn't exist and this is a login attempt
+  else if (!user && !isRegistration) {
+    return res.status(401).json({ 
+      message: 'No account exists with this email. Please register first.'
+    });
+  }
+  // If user exists but doesn't have googleId (user previously registered with email/password)
+  else if (user && !user.googleId) {
+    // Link the Google account to the existing user
+    console.log("Linking Google account to existing user:", email);
+    
+    await dataStore.update('users', { email }, {
+      googleId,
+      picture: picture || user.picture,
+      updatedAt: new Date().toISOString()
+    });
+    
+    // Get the updated user
+    user = await dataStore.findOne('users', { email });
+  }
+  // If user exists with googleId but it doesn't match (someone trying to use same email with different Google account)
+  else if (user && user.googleId && user.googleId !== googleId) {
+    return res.status(401).json({ 
+      message: 'This email is already linked to a different Google account' 
+    });
   }
   
-  console.log('API endpoints:');
-  console.log('  GET  /api/status      - Check API status');
-  console.log('  GET  /api/users       - Get all users');
-  console.log('  POST /api/users       - Register a new user');
-  console.log('  GET  /api/users/:id   - Get user by ID');
-  console.log('  POST /api/login       - Login with email and password');
+  // Verify the user was found or created
+  if (!user) {
+    return res.status(500).json({ message: 'Failed to authenticate with Google' });
+  }
+  
+  // Don't send any sensitive data back in the response
+  const { password, ...userWithoutPassword } = user;
+  res.json(userWithoutPassword);
+} catch (error) {
+  console.error('Google authentication error:', error);
+  res.status(500).json({ 
+    message: 'Server error during Google authentication',
+    error: error.message 
+  });
+}
+});
+
+// Google authentication with token verification (more secure)
+app.post('/api/google-auth-secure', async (req, res) => {
+try {
+  const { token, isRegistration } = req.body;
+  
+  if (!token) {
+    return res.status(400).json({ message: 'Google token is required' });
+  }
+  
+  // Verify the token with Google
+  let googleUser;
+  try {
+    googleUser = await verifyGoogleToken(token);
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid Google token' });
+  }
+  
+  if (!googleUser.verified) {
+    return res.status(400).json({ message: 'Google email is not verified' });
+  }
+  
+  const { googleId, email, name, picture } = googleUser;
+  
+  // Check if user exists
+  let user = await dataStore.findOne('users', { email });
+  
+  // If user doesn't exist and this is a registration, create new user
+  if (!user && isRegistration) {
+    console.log("Creating new user with Google account:", { name, email, googleId });
+    
+    user = await dataStore.insert('users', {
+      name,
+      email,
+      googleId,
+      picture,
+      authProvider: 'google',
+      createdAt: new Date().toISOString()
+    });
+    
+    console.log("Google user created successfully:", user);
+  }
+  // If user doesn't exist and this is a login attempt
+  else if (!user && !isRegistration) {
+    return res.status(401).json({ 
+      message: 'No account exists with this email. Please register first.'
+    });
+  }
+  // If user exists but doesn't have googleId (user previously registered with email/password)
+  else if (user && !user.googleId) {
+    // Link the Google account to the existing user
+    console.log("Linking Google account to existing user:", email);
+    
+    await dataStore.update('users', { email }, {
+      googleId,
+      picture: picture || user.picture,
+      updatedAt: new Date().toISOString()
+    });
+    
+    // Get the updated user
+    user = await dataStore.findOne('users', { email });
+  }
+  // If user exists with googleId but it doesn't match (someone trying to use same email with different Google account)
+  else if (user && user.googleId && user.googleId !== googleId) {
+    return res.status(401).json({ 
+      message: 'This email is already linked to a different Google account' 
+    });
+  }
+  
+  // Verify the user was found or created
+  if (!user) {
+    return res.status(500).json({ message: 'Failed to authenticate with Google' });
+  }
+  
+  // Don't send any sensitive data back in the response
+  const { password, ...userWithoutPassword } = user;
+  res.json(userWithoutPassword);
+} catch (error) {
+  console.error('Google authentication error:', error);
+  res.status(500).json({ 
+    message: 'Server error during Google authentication',
+    error: error.message 
+  });
+}
+});
+
+// Start the server with improved logging for GitHub Codespaces
+app.listen(port, '0.0.0.0', () => {
+console.log(`Server is running on port ${port}`);
+
+// Detect if running in GitHub Codespaces
+const codespaceUrl = process.env.CODESPACE_NAME 
+  ? `https://${process.env.CODESPACE_NAME}-${port}.app.github.dev` 
+  : null;
+
+if (codespaceUrl) {
+  console.log(`Running in GitHub Codespaces`);
+  console.log(`Access your API at: ${codespaceUrl}`);
+} else {
+  console.log(`Access your API at: http://localhost:${port}`);
+}
+
+console.log('API endpoints:');
+console.log('  GET  /api/status           - Check API status');
+console.log('  GET  /api/users            - Get all users');
+console.log('  POST /api/users            - Register a new user');
+console.log('  GET  /api/users/:id        - Get user by ID');
+console.log('  POST /api/login            - Login with email and password');
+console.log('  POST /api/google-auth      - Login/Register with Google (simple)');
+console.log('  POST /api/google-auth-secure - Login/Register with Google (token verification)');
 });
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('Server shutting down...');
-  await dataStore.save();
-  process.exit(0);
+console.log('Server shutting down...');
+await dataStore.save();
+process.exit(0);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  dataStore.save().then(() => {
-    process.exit(1);
-  });
+console.error('Uncaught Exception:', error);
+dataStore.save().then(() => {
+  process.exit(1);
 });
+});
+
+// Log Google client ID status
+if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR-CLIENT-ID-HERE.apps.googleusercontent.com') {
+console.warn('⚠️  GOOGLE_CLIENT_ID environment variable not properly set!');
+console.warn('    Google authentication will not work correctly.');
+console.warn('    Please set a valid Google Client ID in your environment variables.');
+} else {
+console.log('✓ Google Client ID configured successfully');
+}
+
+module.exports = app; // Export for testing

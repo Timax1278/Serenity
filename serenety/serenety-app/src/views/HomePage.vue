@@ -88,12 +88,13 @@
         <div class="divider">OR</div>
 
         <div class="social-login">
-          <div class="social-btn">
+          <div class="social-btn google-btn" @click="loginWithGoogle">
             <svg viewBox="0 0 24 24">
               <path
                 d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
               />
             </svg>
+            <span>Login with Google</span>
           </div>
           <div class="social-btn">
             <svg viewBox="0 0 24 24">
@@ -172,6 +173,19 @@
         </button>
 
         <p v-if="registerError" class="error shake">{{ registerError }}</p>
+
+        <div class="divider">OR</div>
+
+        <div class="social-login">
+          <div class="social-btn google-btn" @click="registerWithGoogle">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
+              />
+            </svg>
+            <span>Sign up with Google</span>
+          </div>
+        </div>
       </form>
     </div>
 
@@ -201,6 +215,7 @@
 </template>
 
 <script>
+import { googleTokenLogin } from "vue3-google-login";
 export default {
   name: "HomePage",
   data() {
@@ -232,7 +247,8 @@ export default {
   },
   created() {
     // Check if user is already logged in
-    const storedUser = localStorage.getItem("user");
+    const storedUser =
+      localStorage.getItem("user") || sessionStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
       this.isAuthenticated = true;
@@ -331,6 +347,7 @@ export default {
         this.isLoading = false;
       }
     },
+
     async login() {
       this.loginError = "";
       this.isLoading = true;
@@ -341,7 +358,7 @@ export default {
           password: "[HIDDEN]",
         });
 
-        // Use the login endpoint instead of getting all users
+        // Use the login endpoint
         const res = await fetch(`${this.backendUrl}/api/login`, {
           method: "POST",
           headers: {
@@ -378,62 +395,280 @@ export default {
         this.$router.push("/dashboard-page");
       } catch (err) {
         console.error("Login error:", err);
-        this.loginError = err.message || "Invalid email or password.";
+        this.loginError = err.message || "Login failed. Please try again.";
       } finally {
         this.isLoading = false;
       }
     },
+
+    loginWithGoogle() {
+      googleTokenLogin({
+        // Specify the correct redirect URI that matches your Google Cloud Console config
+        ux_mode: "popup",
+        context: "signin",
+      })
+        .then((response) => {
+          // Process the response as before
+          const token = response.credential;
+
+          fetch(`${this.backendUrl}/api/auth/login-google`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Login successful:", data);
+              localStorage.setItem("user", JSON.stringify(data));
+              this.isAuthenticated = true;
+              this.loggedInUser = data.email;
+              this.showNotification("Login successful!", "success");
+              this.$router.push("/dashboard-page");
+            })
+            .catch((error) => {
+              console.error("Error during login:", error);
+              this.loginError = "Google login failed. Please try again.";
+            });
+        })
+        .catch((error) => {
+          console.error("Google login error:", error);
+          this.loginError = "Google login failed. Please try again.";
+        });
+    },
+
+    registerWithGoogle() {
+      googleTokenLogin({
+        // Same settings for registration
+        ux_mode: "popup",
+        context: "signup",
+      })
+        .then((response) => {
+          // Process as before
+          const token = response.credential;
+
+          fetch(`${this.backendUrl}/api/auth/register-google`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Registration successful:", data);
+              localStorage.setItem("user", JSON.stringify(data));
+              this.isAuthenticated = true;
+              this.loggedInUser = data.email;
+              this.createConfetti();
+              this.$router.push("/dashboard-page");
+            })
+            .catch((error) => {
+              console.error("Error during registration:", error);
+              this.registerError =
+                "Google registration failed. Please try again.";
+            });
+        })
+        .catch((error) => {
+          console.error("Google registration error:", error);
+          this.registerError = "Google registration failed. Please try again.";
+        });
+    },
+
     logout() {
-      localStorage.removeItem("user");
-      sessionStorage.removeItem("user");
-      this.isAuthenticated = false;
-      this.loggedInUser = null;
-      this.loginData = { email: "", password: "" };
-      console.log("User logged out");
-      this.showNotification("You have been logged out", "info");
-    },
-    // New methods for enhanced UI
-    showNotification(message, type) {
-      const notification = document.createElement("div");
-      notification.className = `notification ${type}`;
-      notification.textContent = message;
-      document.body.appendChild(notification);
+      this.isLoading = true;
 
+      try {
+        // Cancella i dati dell'utente
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
+
+        this.isAuthenticated = false;
+        this.loggedInUser = null;
+
+        // Redirect alla home page
+        this.$router.push("/");
+
+        this.showNotification("Logout successful", "info");
+      } catch (err) {
+        console.error("Logout error:", err);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    showNotification(message, type = "info") {
+      // Implementazione semplice di notifiche
+      console.log(`Notification (${type}): ${message}`);
+
+      // Mostra un toast o un alert
+      // Questa è una implementazione base, potresti voler usare una libreria come vue-toastification
+      const toast = document.createElement("div");
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      // Rimuovi il toast dopo 3 secondi
       setTimeout(() => {
-        notification.remove();
-      }, 5000);
+        toast.classList.add("toast-hide");
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
     },
-    createConfetti() {
-      const confettiContainer = document.createElement("div");
-      confettiContainer.className = "confetti-container";
-      document.body.appendChild(confettiContainer);
 
-      // Create 50 confetti pieces
+    createConfetti() {
+      // Implementazione semplice dell'animazione confetti
+      console.log("Showing confetti animation!");
+
+      // Qui potresti implementare un'animazione confetti
+      // Ad esempio, usando una libreria come canvas-confetti
+
+      // Per questa implementazione semplice, creiamo alcuni elementi DOM
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.top = "0";
+      container.style.left = "0";
+      container.style.width = "100%";
+      container.style.height = "100%";
+      container.style.pointerEvents = "none";
+      container.style.zIndex = "9999";
+      document.body.appendChild(container);
+
+      // Crea 50 confetti colorati
+      const colors = [
+        "#f44336",
+        "#e91e63",
+        "#9c27b0",
+        "#673ab7",
+        "#3f51b5",
+        "#2196f3",
+        "#03a9f4",
+        "#00bcd4",
+        "#009688",
+        "#4CAF50",
+      ];
+
       for (let i = 0; i < 50; i++) {
         const confetti = document.createElement("div");
-        confetti.className = "confetti";
-        confetti.style.left = Math.random() * 100 + "vw";
-        confetti.style.animationDuration = Math.random() * 3 + 2 + "s";
-        confetti.style.backgroundColor = [
-          "#ffe259",
-          "#ffa751",
-          "#43cea2",
-          "#185a9d",
-          "#ffffff",
-        ][Math.floor(Math.random() * 5)];
+        confetti.style.position = "absolute";
+        confetti.style.width = `${Math.random() * 10 + 5}px`;
+        confetti.style.height = `${Math.random() * 10 + 5}px`;
+        confetti.style.backgroundColor =
+          colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.top = "-20px";
+        confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
 
-        confettiContainer.appendChild(confetti);
+        container.appendChild(confetti);
+
+        // Animazione di caduta
+        const duration = Math.random() * 3 + 2;
+        confetti.style.animation = `fall ${duration}s linear forwards`;
       }
 
-      // Remove confetti after animation completes
+      // Rimuovi il container dopo 5 secondi
       setTimeout(() => {
-        confettiContainer.remove();
+        document.body.removeChild(container);
       }, 5000);
     },
   },
 };
 </script>
 
+<style scoped>
+/* Aggiungi qui i tuoi stili CSS esistenti */
+
+/* Stile per il pulsante Google */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #ffffff;
+  color: #444;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 15px;
+}
+
+.google-btn:hover {
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.google-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Stile per i toast di notifica */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  color: white;
+  max-width: 300px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+  z-index: 9999;
+  animation: slideIn 0.3s ease forwards;
+}
+
+.toast-success {
+  background-color: #4caf50;
+}
+
+.toast-info {
+  background-color: #2196f3;
+}
+
+.toast-warning {
+  background-color: #ff9800;
+}
+
+.toast-error {
+  background-color: #f44336;
+}
+
+.toast-hide {
+  animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+</style>
 <style scoped>
 /* Paste the entire CSS here */
 body,
