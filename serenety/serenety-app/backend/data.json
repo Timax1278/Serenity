@@ -24,6 +24,24 @@
       "email": "coaie@mail.it",
       "password": "coaie123",
       "_id": "1742465693254"
+    },
+    {
+      "name": "Tymofiy Davydov",
+      "email": "davydov.tymofiy14@gmail.com",
+      "googleId": "107537169377936167879",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocKOZZBY4YKNGRr-K-3ZL8vskuZ8T2CQ_Q5D5a1JOAihpvo6aPNz=s96-c",
+      "authProvider": "google",
+      "createdAt": "2025-03-21T12:00:58.008Z",
+      "_id": "1742558458008"
+    },
+    {
+      "name": "Tymofiy Davydov",
+      "email": "davydov.tymofiy.studente@itispaleocapa.it",
+      "googleId": "100989759204456465503",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocKri5I_QXJtCOp4s27gtPvalQPZjqyttY9uIEpJpGrxHwTZHbrU=s96-c",
+      "authProvider": "google",
+      "createdAt": "2025-03-21T12:02:06.050Z",
+      "_id": "1742558526050"
     }
   ]
 }

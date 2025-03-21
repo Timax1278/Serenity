@@ -401,81 +401,170 @@ export default {
       }
     },
 
-    loginWithGoogle() {
-      googleTokenLogin({
-        // Specify the correct redirect URI that matches your Google Cloud Console config
-        ux_mode: "popup",
-        context: "signin",
-      })
-        .then((response) => {
-          // Process the response as before
-          const token = response.credential;
+    async loginWithGoogle() {
+      try {
+        this.isLoading = true;
+        this.loginError = "";
+        console.log("Attempting Google login...");
 
-          fetch(`${this.backendUrl}/api/auth/login-google`, {
+        // Use the googleTokenLogin method
+        const tokenResponse = await googleTokenLogin();
+        console.log("Google token response:", tokenResponse);
+
+        // We have an access token, now fetch the user profile
+        if (tokenResponse && tokenResponse.access_token) {
+          console.log("Got access token, fetching user profile...");
+
+          // Fetch the user profile using the access token
+          const userInfoResponse = await fetch(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            {
+              headers: {
+                Authorization: `Bearer ${tokenResponse.access_token}`,
+              },
+            }
+          );
+
+          if (!userInfoResponse.ok) {
+            throw new Error("Failed to fetch user info from Google");
+          }
+
+          const userInfo = await userInfoResponse.json();
+          console.log("User info from Google:", userInfo);
+
+          // Extract the required fields
+          const userData = {
+            googleId: userInfo.sub,
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture,
+            isRegistration: false, // This is login, not registration
+          };
+
+          console.log("Extracted user data:", userData);
+
+          // Send to your backend
+          const res = await fetch(`${this.backendUrl}/api/google-auth`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ token }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              console.log("Login successful:", data);
-              localStorage.setItem("user", JSON.stringify(data));
-              this.isAuthenticated = true;
-              this.loggedInUser = data.email;
-              this.showNotification("Login successful!", "success");
-              this.$router.push("/dashboard-page");
-            })
-            .catch((error) => {
-              console.error("Error during login:", error);
-              this.loginError = "Google login failed. Please try again.";
-            });
-        })
-        .catch((error) => {
-          console.error("Google login error:", error);
-          this.loginError = "Google login failed. Please try again.";
-        });
+            body: JSON.stringify(userData),
+          });
+
+          // Check for errors
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || "Google login failed");
+          }
+
+          // Process successful response
+          const userDataFromBackend = await res.json();
+          console.log("Backend login successful:", userDataFromBackend);
+
+          // Store user data based on remember me setting
+          if (this.rememberMe) {
+            localStorage.setItem("user", JSON.stringify(userDataFromBackend));
+          } else {
+            sessionStorage.setItem("user", JSON.stringify(userDataFromBackend));
+          }
+
+          this.isAuthenticated = true;
+          this.loggedInUser = userDataFromBackend.email;
+          this.$router.push("/dashboard-page");
+        } else {
+          throw new Error("Did not receive access token from Google");
+        }
+      } catch (error) {
+        console.error("Google login error:", error);
+        this.loginError =
+          error.message || "Failed to sign in with Google. Please try again.";
+      } finally {
+        this.isLoading = false;
+      }
     },
+    async registerWithGoogle() {
+      try {
+        this.isLoading = true;
+        this.registerError = "";
+        console.log("Attempting Google registration...");
 
-    registerWithGoogle() {
-      googleTokenLogin({
-        // Same settings for registration
-        ux_mode: "popup",
-        context: "signup",
-      })
-        .then((response) => {
-          // Process as before
-          const token = response.credential;
+        // Use the googleTokenLogin method
+        const tokenResponse = await googleTokenLogin();
+        console.log("Google token response:", tokenResponse);
 
-          fetch(`${this.backendUrl}/api/auth/register-google`, {
+        // We have an access token, now fetch the user profile
+        if (tokenResponse && tokenResponse.access_token) {
+          console.log("Got access token, fetching user profile...");
+
+          // Fetch the user profile using the access token
+          const userInfoResponse = await fetch(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            {
+              headers: {
+                Authorization: `Bearer ${tokenResponse.access_token}`,
+              },
+            }
+          );
+
+          if (!userInfoResponse.ok) {
+            throw new Error("Failed to fetch user info from Google");
+          }
+
+          const userInfo = await userInfoResponse.json();
+          console.log("User info from Google:", userInfo);
+
+          // Extract the required fields
+          const userData = {
+            googleId: userInfo.sub,
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture,
+            isRegistration: true,
+          };
+
+          console.log("Extracted user data:", userData);
+
+          // Make sure we have all required fields
+          if (!userData.googleId || !userData.email || !userData.name) {
+            throw new Error("Missing required user information");
+          }
+
+          // Send to your backend
+          const res = await fetch(`${this.backendUrl}/api/google-auth`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ token }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              console.log("Registration successful:", data);
-              localStorage.setItem("user", JSON.stringify(data));
-              this.isAuthenticated = true;
-              this.loggedInUser = data.email;
-              this.createConfetti();
-              this.$router.push("/dashboard-page");
-            })
-            .catch((error) => {
-              console.error("Error during registration:", error);
-              this.registerError =
-                "Google registration failed. Please try again.";
-            });
-        })
-        .catch((error) => {
-          console.error("Google registration error:", error);
-          this.registerError = "Google registration failed. Please try again.";
-        });
-    },
+            body: JSON.stringify(userData),
+          });
 
+          // Check for errors
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || "Google registration failed");
+          }
+
+          // Process successful response
+          const userDataFromBackend = await res.json();
+          console.log("Backend registration successful:", userDataFromBackend);
+
+          // Store user data
+          localStorage.setItem("user", JSON.stringify(userDataFromBackend));
+          this.isAuthenticated = true;
+          this.loggedInUser = userDataFromBackend.email;
+          this.$router.push("/dashboard-page");
+        } else {
+          throw new Error("Did not receive access token from Google");
+        }
+      } catch (error) {
+        console.error("Google registration error:", error);
+        this.registerError =
+          error.message || "Failed to sign up with Google. Please try again.";
+      } finally {
+        this.isLoading = false;
+      }
+    },
     logout() {
       this.isLoading = true;
 
