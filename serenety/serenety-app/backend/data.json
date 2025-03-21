@@ -16,6 +16,15 @@
       "authProvider": "google",
       "createdAt": "2025-03-21T12:41:47.640Z",
       "_id": "1742560907640"
+    },
+    {
+      "name": "Administrator",
+      "email": "admin@example.com",
+      "password": "admin123",
+      "isAdmin": true,
+      "authProvider": "local",
+      "createdAt": "2025-03-21T12:50:59.604Z",
+      "_id": "1742561459604"
     }
   ]
 }
