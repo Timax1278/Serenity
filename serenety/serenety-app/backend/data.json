@@ -1,29 +1,12 @@
 {
   "users": [
     {
-      "name": "Test User",
-      "email": "test@example.com",
-      "role": "user",
-      "age": 30,
-      "_id": "1742331295409"
-    },
-    {
-      "name": "tuma",
-      "email": "tuma@gmail.com",
-      "password": "123123",
-      "_id": "1742407300930"
-    },
-    {
-      "name": "mama",
-      "email": "mama@gmail.com",
-      "password": "123123",
-      "_id": "1742407491446"
-    },
-    {
-      "name": "COAiw",
-      "email": "coaie@mail.it",
-      "password": "coaie123",
-      "_id": "1742465693254"
+      "name": "timaxx",
+      "email": "timaxx@gmail.com",
+      "password": "123123123",
+      "authProvider": "local",
+      "createdAt": "2025-03-21T12:39:43.549Z",
+      "_id": "1742560783549"
     },
     {
       "name": "Tymofiy Davydov",
@@ -31,17 +14,8 @@
       "googleId": "107537169377936167879",
       "picture": "https://lh3.googleusercontent.com/a/ACg8ocKOZZBY4YKNGRr-K-3ZL8vskuZ8T2CQ_Q5D5a1JOAihpvo6aPNz=s96-c",
       "authProvider": "google",
-      "createdAt": "2025-03-21T12:00:58.008Z",
-      "_id": "1742558458008"
-    },
-    {
-      "name": "Tymofiy Davydov",
-      "email": "davydov.tymofiy.studente@itispaleocapa.it",
-      "googleId": "100989759204456465503",
-      "picture": "https://lh3.googleusercontent.com/a/ACg8ocKri5I_QXJtCOp4s27gtPvalQPZjqyttY9uIEpJpGrxHwTZHbrU=s96-c",
-      "authProvider": "google",
-      "createdAt": "2025-03-21T12:02:06.050Z",
-      "_id": "1742558526050"
+      "createdAt": "2025-03-21T12:41:47.640Z",
+      "_id": "1742560907640"
     }
   ]
 }
