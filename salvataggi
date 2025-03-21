@@ -1,5 +1,7 @@
 Davydov Tymofiy
 
+npm run lint -- --fix
+
 Serenity
 
 L'idea consiste nel creare una piattaforma dedicata alla salute mentale degli adolescenti, che offra servizi su misura come terapia, meditazione guidata, risorse per la salute mentale e uno spazio sociale sicuro dove i ragazzi possano connettersi tra loro. La piattaforma potrebbe fornire un approccio olistico al benessere mentale, concentrandosi su supporto emotivo, gestione dello stress e sviluppo di meccanismi di coping sani, attraverso l'aiuto di professionisti e il supporto tra pari. Un'app che offre meditazione guidata, spazi sicuri di discussione e la possibilità di accedere a terapie personalizzate con specialisti, aiutando gli adolescenti a gestire lo stress e migliorare il loro benessere emotivo.

@@ -202,9 +202,10 @@
         You are logged in as <span class="glow">{{ loggedInUser }}</span>
       </p>
 
-      <router-link to="/dashboard-page" class="cta-button"
-        >Go to Dashboard</router-link
-      >
+      <!-- Nel componente HomePage.vue, sostituisci il router-link con un button -->
+      <button @click="navigateToDashboard" class="cta-button">
+        Go to Dashboard
+      </button>
 
       <button @click="logout">Logout</button>
     </div>
@@ -586,83 +587,89 @@ export default {
         this.isLoading = false;
       }
     },
-
-    showNotification(message, type = "info") {
-      // Implementazione semplice di notifiche
-      console.log(`Notification (${type}): ${message}`);
-
-      // Mostra un toast o un alert
-      // Questa è una implementazione base, potresti voler usare una libreria come vue-toastification
-      const toast = document.createElement("div");
-      toast.className = `toast toast-${type}`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-
-      // Rimuovi il toast dopo 3 secondi
-      setTimeout(() => {
-        toast.classList.add("toast-hide");
-        setTimeout(() => {
-          document.body.removeChild(toast);
-        }, 300);
-      }, 3000);
+    navigateToDashboard() {
+      console.log("Tentativo di navigazione alla dashboard");
+      this.$router.push({ name: "DashboardPage" }).catch((err) => {
+        console.error("Errore di navigazione:", err);
+      });
     },
+  },
 
-    createConfetti() {
-      // Implementazione semplice dell'animazione confetti
-      console.log("Showing confetti animation!");
+  showNotification(message, type = "info") {
+    // Implementazione semplice di notifiche
+    console.log(`Notification (${type}): ${message}`);
 
-      // Qui potresti implementare un'animazione confetti
-      // Ad esempio, usando una libreria come canvas-confetti
+    // Mostra un toast o un alert
+    // Questa è una implementazione base, potresti voler usare una libreria come vue-toastification
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
 
-      // Per questa implementazione semplice, creiamo alcuni elementi DOM
-      const container = document.createElement("div");
-      container.style.position = "fixed";
-      container.style.top = "0";
-      container.style.left = "0";
-      container.style.width = "100%";
-      container.style.height = "100%";
-      container.style.pointerEvents = "none";
-      container.style.zIndex = "9999";
-      document.body.appendChild(container);
-
-      // Crea 50 confetti colorati
-      const colors = [
-        "#f44336",
-        "#e91e63",
-        "#9c27b0",
-        "#673ab7",
-        "#3f51b5",
-        "#2196f3",
-        "#03a9f4",
-        "#00bcd4",
-        "#009688",
-        "#4CAF50",
-      ];
-
-      for (let i = 0; i < 50; i++) {
-        const confetti = document.createElement("div");
-        confetti.style.position = "absolute";
-        confetti.style.width = `${Math.random() * 10 + 5}px`;
-        confetti.style.height = `${Math.random() * 10 + 5}px`;
-        confetti.style.backgroundColor =
-          colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.left = `${Math.random() * 100}%`;
-        confetti.style.top = "-20px";
-        confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
-        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-
-        container.appendChild(confetti);
-
-        // Animazione di caduta
-        const duration = Math.random() * 3 + 2;
-        confetti.style.animation = `fall ${duration}s linear forwards`;
-      }
-
-      // Rimuovi il container dopo 5 secondi
+    // Rimuovi il toast dopo 3 secondi
+    setTimeout(() => {
+      toast.classList.add("toast-hide");
       setTimeout(() => {
-        document.body.removeChild(container);
-      }, 5000);
-    },
+        document.body.removeChild(toast);
+      }, 300);
+    }, 3000);
+  },
+
+  createConfetti() {
+    // Implementazione semplice dell'animazione confetti
+    console.log("Showing confetti animation!");
+
+    // Qui potresti implementare un'animazione confetti
+    // Ad esempio, usando una libreria come canvas-confetti
+
+    // Per questa implementazione semplice, creiamo alcuni elementi DOM
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.top = "0";
+    container.style.left = "0";
+    container.style.width = "100%";
+    container.style.height = "100%";
+    container.style.pointerEvents = "none";
+    container.style.zIndex = "9999";
+    document.body.appendChild(container);
+
+    // Crea 50 confetti colorati
+    const colors = [
+      "#f44336",
+      "#e91e63",
+      "#9c27b0",
+      "#673ab7",
+      "#3f51b5",
+      "#2196f3",
+      "#03a9f4",
+      "#00bcd4",
+      "#009688",
+      "#4CAF50",
+    ];
+
+    for (let i = 0; i < 50; i++) {
+      const confetti = document.createElement("div");
+      confetti.style.position = "absolute";
+      confetti.style.width = `${Math.random() * 10 + 5}px`;
+      confetti.style.height = `${Math.random() * 10 + 5}px`;
+      confetti.style.backgroundColor =
+        colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.left = `${Math.random() * 100}%`;
+      confetti.style.top = "-20px";
+      confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+
+      container.appendChild(confetti);
+
+      // Animazione di caduta
+      const duration = Math.random() * 3 + 2;
+      confetti.style.animation = `fall ${duration}s linear forwards`;
+    }
+
+    // Rimuovi il container dopo 5 secondi
+    setTimeout(() => {
+      document.body.removeChild(container);
+    }, 5000);
   },
 };
 </script>

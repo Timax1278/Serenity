@@ -25,6 +25,25 @@
       "authProvider": "local",
       "createdAt": "2025-03-21T12:50:59.604Z",
       "_id": "1742561459604"
+    },
+    {
+      "name": "mama",
+      "email": "mama@gmail.com",
+      "password": "123123",
+      "isAdmin": false,
+      "authProvider": "local",
+      "createdAt": "2025-03-21T17:55:24.973Z",
+      "_id": "1742579724973"
+    },
+    {
+      "name": "World Tanks",
+      "email": "tima.worldoftanks127@gmail.com",
+      "googleId": "107031503458354043488",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocKO9Ar0EJgAB_P2kMYuGVGI70Jdhm9Kmj6zJgbgbnx0VjPtlw=s96-c",
+      "isAdmin": false,
+      "authProvider": "google",
+      "createdAt": "2025-03-21T18:05:25.772Z",
+      "_id": "1742580325772"
     }
   ]
 }
