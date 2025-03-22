@@ -44,6 +44,15 @@
       "authProvider": "google",
       "createdAt": "2025-03-21T18:05:25.772Z",
       "_id": "1742580325772"
+    },
+    {
+      "name": "provadata",
+      "email": "provadata@gmail.com",
+      "password": "123123",
+      "isAdmin": false,
+      "authProvider": "local",
+      "createdAt": "2025-03-22T15:52:01.903Z",
+      "_id": "1742658721903"
     }
   ]
 }

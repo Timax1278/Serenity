@@ -15,6 +15,20 @@
       <router-link to="/user-profile">
         <button class="btn">Your Profile</button>
       </router-link>
+
+      <!-- Nuovi tasti aggiunti -->
+      <router-link to="/ajax-data">
+        <button class="btn">AJAX Data</button>
+      </router-link>
+      <router-link to="/third-party-api">
+        <button class="btn">Third Party API</button>
+      </router-link>
+      <router-link to="/swagger-docs">
+        <button class="btn">Swagger Docs</button>
+      </router-link>
+      <router-link to="/websocket-counter">
+        <button class="btn">Real-time Visitors</button>
+      </router-link>
     </div>
 
     <button class="btn-logout" @click="logout">Logout</button>
@@ -24,19 +38,57 @@
 <script>
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted } from "vue";
 
 export default {
   name: "DashboardPage",
   setup() {
     const store = useStore();
     const router = useRouter();
+    const visitorCount = ref(0);
+    let socket = null;
 
     const logout = () => {
       store.dispatch("auth/logout");
       router.push("/"); // Redirigi alla HomePage dopo il logout
     };
 
-    return { logout };
+    onMounted(() => {
+      // Inizializza WebSocket per il contatore visitatori
+      initWebSocket();
+    });
+
+    onUnmounted(() => {
+      // Chiudi WebSocket quando il componente viene smontato
+      if (socket) {
+        socket.close();
+      }
+    });
+
+    const initWebSocket = () => {
+      // Usa variabile d'ambiente per l'URL del WebSocket
+      const wsUrl =
+        process.env.VUE_APP_WEBSOCKET_URL || "ws://localhost:8080/visitors";
+      socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => {
+        console.log("WebSocket connection established");
+      };
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        visitorCount.value = data.count;
+      };
+
+      socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+    };
+
+    return {
+      logout,
+      visitorCount,
+    };
   },
 };
 </script>
@@ -55,6 +107,9 @@ h1 {
 
 .feature-buttons {
   margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .feature-buttons .btn {
@@ -71,6 +126,20 @@ h1 {
 
 .feature-buttons .btn:hover {
   background-color: #2980b9;
+}
+
+.visitor-counter {
+  margin-top: 1.5rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.visitor-counter p {
+  margin: 0;
+  font-weight: bold;
+  color: #2c3e50;
 }
 
 .btn-logout {
