@@ -347,6 +347,131 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ message: 'Server error during login' });
   }
 });
+// Google Authentication endpoint
+app.post('/api/google-auth', async (req, res) => {
+  try {
+    console.log("Received Google auth data:", req.body);
+    
+    const { googleId, email, name, picture, idToken } = req.body;
+    
+    if (!email || !googleId) {
+      return res.status(400).json({ 
+        message: 'Email and Google ID are required'
+      });
+    }
+    
+    // Verify the token if provided
+    if (idToken) {
+      try {
+        await verifyGoogleToken(idToken);
+      } catch (error) {
+        return res.status(401).json({ message: 'Invalid Google token' });
+      }
+    }
+    
+    // Check if user already exists
+    let user = await dataStore.findOne('users', { email });
+    
+    if (user) {
+      // Update existing user with Google info if not already set
+      if (!user.googleId) {
+        await dataStore.update('users', { _id: user._id }, { 
+          googleId, 
+          picture,
+          authProvider: 'google'
+        });
+        
+        // Get the updated user
+        user = await dataStore.findOne('users', { _id: user._id });
+      }
+    } else {
+      // Create a new user
+      user = await dataStore.insert('users', {
+        name,
+        email,
+        googleId,
+        picture,
+        isAdmin: false,
+        authProvider: 'google',
+        createdAt: new Date().toISOString()
+      });
+    }
+    
+    // Don't send the password back in the response
+    const { password, ...userWithoutPassword } = user;
+    
+    console.log("Google authentication successful for:", email);
+    res.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Google authentication error:', error);
+    res.status(500).json({ 
+      message: 'Server error during Google authentication',
+      error: error.message 
+    });
+  }
+});
+// Update user endpoint
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { name, email, currentPassword, newPassword } = req.body;
+    
+    // Find the user
+    const user = await dataStore.findOne('users', { _id: userId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Prepare update object
+    const updateData = {};
+    
+    // Always allow name update
+    if (name) {
+      updateData.name = name;
+    }
+    
+    // For local auth users, handle email and password changes
+    if (user.authProvider === 'local') {
+      // Email update
+      if (email && email !== user.email) {
+        // Check if the new email is already in use
+        const existingUser = await dataStore.findOne('users', { email });
+        if (existingUser && existingUser._id !== userId) {
+          return res.status(400).json({ message: 'Email already in use by another account' });
+        }
+        updateData.email = email;
+      }
+      
+      // Password update
+      if (newPassword) {
+        // Verify current password
+        if (!currentPassword) {
+          return res.status(400).json({ message: 'Current password is required to set a new password' });
+        }
+        
+        if (user.password !== currentPassword) {
+          return res.status(401).json({ message: 'Current password is incorrect' });
+        }
+        
+        updateData.password = newPassword;
+      }
+    }
+    
+    // Update the user
+    await dataStore.update('users', { _id: userId }, updateData);
+    
+    // Get the updated user
+    const updatedUser = await dataStore.findOne('users', { _id: userId });
+    
+    // Remove password from response
+    const { password, ...userWithoutPassword } = updatedUser;
+    
+    res.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
 
 // Admin login endpoint
 app.post('/api/admin/login', async (req, res) => {
