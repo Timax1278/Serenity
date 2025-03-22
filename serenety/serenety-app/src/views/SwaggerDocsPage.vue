@@ -6,34 +6,34 @@
     </ul>
 
     <div class="main-container glass">
-      <!-- Back to Dashboard button spostato qui, in alto a sinistra -->
+      <!-- Back to Dashboard button -->
       <div class="back-to-dashboard">
         <router-link to="/dashboard-page" class="back-button">
           <span class="back-icon">←</span> Torna alla Dashboard
         </router-link>
       </div>
 
-      <h1>Serenity API Documentation</h1>
+      <h1>Serenity Analytics API Documentation</h1>
 
       <div class="api-section">
         <h2>API Overview</h2>
         <p>
-          A RESTful authentication API with user management and admin
-          capabilities.
+          A RESTful analytics API for tracking user engagement and application
+          metrics.
         </p>
         <div class="version-info">
           <span class="badge">Version: 1.0.0</span>
-          <span class="badge">Base URL: /api</span>
+          <span class="badge">Base URL: /api/analytics</span>
         </div>
       </div>
 
       <div class="endpoints">
-        <!-- Server Status -->
+        <!-- API Status -->
         <div class="endpoint-card glass">
           <div class="endpoint-header" @click="toggleEndpoint('status')">
             <div class="method get">GET</div>
             <div class="path">/status</div>
-            <div class="description">Check API status</div>
+            <div class="description">Check analytics API status</div>
             <div class="toggle-icon" :class="{ open: openEndpoints.status }">
               <span></span>
             </div>
@@ -42,35 +42,45 @@
             <div class="detail-section">
               <h4>Response</h4>
               <pre class="code-block">
-  {
-    "status": "ok",
-    "version": "1.0.0",
-    "timestamp": "2025-03-22T12:34:56.789Z"
-  }</pre
+    {
+      "status": "ok",
+      "version": "1.0.0",
+      "timestamp": "2025-03-22T12:34:56.789Z",
+      "metrics": {
+        "totalEvents": 12453,
+        "activeUsers": 342
+      }
+    }</pre
               >
             </div>
           </div>
         </div>
 
-        <!-- User Registration -->
+        <!-- Track Event -->
         <div class="endpoint-card glass">
-          <div class="endpoint-header" @click="toggleEndpoint('register')">
+          <div class="endpoint-header" @click="toggleEndpoint('trackEvent')">
             <div class="method post">POST</div>
-            <div class="path">/users</div>
-            <div class="description">Register a new user</div>
-            <div class="toggle-icon" :class="{ open: openEndpoints.register }">
+            <div class="path">/events</div>
+            <div class="description">Track a user event</div>
+            <div
+              class="toggle-icon"
+              :class="{ open: openEndpoints.trackEvent }"
+            >
               <span></span>
             </div>
           </div>
-          <div class="endpoint-details" v-if="openEndpoints.register">
+          <div class="endpoint-details" v-if="openEndpoints.trackEvent">
             <div class="detail-section">
               <h4>Request Body</h4>
               <pre class="code-block">
-  {
-    "name": "string", // Required
-    "email": "string", // Required, valid email format
-    "password": "string" // Required
-  }</pre
+    {
+      "userId": "string", // Required
+      "eventType": "string", // Required (pageView, buttonClick, formSubmit, etc.)
+      "eventData": {
+        // Optional, custom event properties
+      },
+      "timestamp": "string" // Optional, defaults to server time
+    }</pre
               >
             </div>
             <div class="detail-section">
@@ -78,67 +88,58 @@
               <div class="response">
                 <div class="status success">201 Created</div>
                 <pre class="code-block">
-  {
-    "_id": "string",
-    "name": "string",
-    "email": "string",
-    "isAdmin": false,
-    "authProvider": "local",
-    "createdAt": "string"
-  }</pre
+    {
+      "_id": "string",
+      "userId": "string",
+      "eventType": "string",
+      "eventData": {
+        // Custom event properties
+      },
+      "timestamp": "string",
+      "ip": "string",
+      "userAgent": "string"
+    }</pre
                 >
               </div>
               <div class="response">
                 <div class="status error">400 Bad Request</div>
                 <pre class="code-block">
-  {
-    "message": "Name, Email, and Password are required",
-    "missing": {
-      "name": boolean,
-      "email": boolean,
-      "password": boolean
-    }
-  }</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">400 Bad Request</div>
-                <pre class="code-block">
-  {
-    "message": "Invalid email format"
-  }</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">400 Bad Request</div>
-                <pre class="code-block">
-  {
-    "message": "Registration failed. Email already exists."
-  }</pre
+    {
+      "message": "userId and eventType are required"
+    }</pre
                 >
               </div>
             </div>
           </div>
         </div>
 
-        <!-- User Login -->
+        <!-- User Session -->
         <div class="endpoint-card glass">
-          <div class="endpoint-header" @click="toggleEndpoint('login')">
+          <div class="endpoint-header" @click="toggleEndpoint('userSession')">
             <div class="method post">POST</div>
-            <div class="path">/login</div>
-            <div class="description">Authenticate a user</div>
-            <div class="toggle-icon" :class="{ open: openEndpoints.login }">
+            <div class="path">/sessions</div>
+            <div class="description">Start or update a user session</div>
+            <div
+              class="toggle-icon"
+              :class="{ open: openEndpoints.userSession }"
+            >
               <span></span>
             </div>
           </div>
-          <div class="endpoint-details" v-if="openEndpoints.login">
+          <div class="endpoint-details" v-if="openEndpoints.userSession">
             <div class="detail-section">
               <h4>Request Body</h4>
               <pre class="code-block">
-  {
-    "email": "string", // Required
-    "password": "string" // Required
-  }</pre
+    {
+      "userId": "string", // Required
+      "sessionId": "string", // Optional, if updating existing session
+      "referrer": "string", // Optional
+      "platform": "string", // Optional
+      "location": {         // Optional
+        "country": "string",
+        "city": "string"
+      }
+    }</pre
               >
             </div>
             <div class="detail-section">
@@ -146,84 +147,51 @@
               <div class="response">
                 <div class="status success">200 OK</div>
                 <pre class="code-block">
-  {
-    "_id": "string",
-    "name": "string",
-    "email": "string",
-    "isAdmin": boolean,
-    "authProvider": "string",
-    "createdAt": "string"
-  }</pre
+    {
+      "sessionId": "string",
+      "userId": "string",
+      "startTime": "string",
+      "lastActive": "string",
+      "referrer": "string",
+      "platform": "string",
+      "location": {
+        "country": "string",
+        "city": "string"
+      },
+      "duration": 0, // in seconds
+      "pageViews": 0
+    }</pre
                 >
               </div>
               <div class="response">
                 <div class="status error">400 Bad Request</div>
                 <pre class="code-block">
-  {
-    "message": "Email and password are required"
-  }</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">401 Unauthorized</div>
-                <pre class="code-block">
-  {
-    "message": "Invalid email or password"
-  }</pre
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Get All Users -->
-        <div class="endpoint-card glass">
-          <div class="endpoint-header" @click="toggleEndpoint('getUsers')">
-            <div class="method get">GET</div>
-            <div class="path">/users</div>
-            <div class="description">
-              Retrieve all users (passwords excluded)
-            </div>
-            <div class="toggle-icon" :class="{ open: openEndpoints.getUsers }">
-              <span></span>
-            </div>
-          </div>
-          <div class="endpoint-details" v-if="openEndpoints.getUsers">
-            <div class="detail-section">
-              <h4>Responses</h4>
-              <div class="response">
-                <div class="status success">200 OK</div>
-                <pre class="code-block">
-  [
     {
-      "_id": "string",
-      "name": "string",
-      "email": "string",
-      "isAdmin": boolean,
-      "authProvider": "string",
-      "createdAt": "string"
-    }
-  ]</pre
+      "message": "userId is required"
+    }</pre
                 >
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Get User by ID -->
+        <!-- Get User Analytics -->
         <div class="endpoint-card glass">
-          <div class="endpoint-header" @click="toggleEndpoint('getUserById')">
+          <div
+            class="endpoint-header"
+            @click="toggleEndpoint('getUserAnalytics')"
+          >
             <div class="method get">GET</div>
-            <div class="path">/users/:id</div>
-            <div class="description">Retrieve a specific user by ID</div>
+            <div class="path">/users/:id/analytics</div>
+            <div class="description">Get analytics for a specific user</div>
             <div
               class="toggle-icon"
-              :class="{ open: openEndpoints.getUserById }"
+              :class="{ open: openEndpoints.getUserAnalytics }"
             >
               <span></span>
             </div>
           </div>
-          <div class="endpoint-details" v-if="openEndpoints.getUserById">
+          <div class="endpoint-details" v-if="openEndpoints.getUserAnalytics">
             <div class="detail-section">
               <h4>Path Parameters</h4>
               <table class="params-table">
@@ -244,175 +212,7 @@
               </table>
             </div>
             <div class="detail-section">
-              <h4>Responses</h4>
-              <div class="response">
-                <div class="status success">200 OK</div>
-                <pre class="code-block">
-{
-  "_id": "string",
-  "name": "string",
-  "email": "string",
-  "isAdmin": boolean,
-  "authProvider": "string",
-  "createdAt": "string"
-}</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">404 Not Found</div>
-                <pre class="code-block">
-{
-  "message": "User not found"
-}</pre
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Admin Login -->
-        <div class="endpoint-card glass">
-          <div class="endpoint-header" @click="toggleEndpoint('adminLogin')">
-            <div class="method post">POST</div>
-            <div class="path">/admin/login</div>
-            <div class="description">Authenticate as an administrator</div>
-            <div
-              class="toggle-icon"
-              :class="{ open: openEndpoints.adminLogin }"
-            >
-              <span></span>
-            </div>
-          </div>
-          <div class="endpoint-details" v-if="openEndpoints.adminLogin">
-            <div class="detail-section">
-              <h4>Request Body</h4>
-              <pre class="code-block">
-{
-  "email": "string", // Required
-  "password": "string" // Required
-}</pre
-              >
-            </div>
-            <div class="detail-section">
-              <h4>Responses</h4>
-              <div class="response">
-                <div class="status success">200 OK</div>
-                <pre class="code-block">
-{
-  "message": "Admin login successful",
-  "admin": {
-    "_id": "string",
-    "name": "string",
-    "email": "string",
-    "isAdmin": true
-  },
-  "adminToken": "string"
-}</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">400 Bad Request</div>
-                <pre class="code-block">
-{
-  "message": "Email and password are required"
-}</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">401 Unauthorized</div>
-                <pre class="code-block">
-{
-  "message": "Invalid admin credentials"
-}</pre
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Admin Get All Users -->
-        <div class="endpoint-card glass">
-          <div class="endpoint-header" @click="toggleEndpoint('adminGetUsers')">
-            <div class="method post">POST</div>
-            <div class="path">/admin/users</div>
-            <div class="description">
-              Retrieve all users (admin access, includes passwords)
-            </div>
-            <div
-              class="toggle-icon"
-              :class="{ open: openEndpoints.adminGetUsers }"
-            >
-              <span></span>
-            </div>
-          </div>
-          <div class="endpoint-details" v-if="openEndpoints.adminGetUsers">
-            <div class="detail-section">
-              <h4>Request Body</h4>
-              <pre class="code-block">
-{
-  "adminEmail": "string", // Required
-  "adminPassword": "string", // Required
-  "adminToken": "string" // Required
-}</pre
-              >
-            </div>
-            <div class="detail-section">
-              <h4>Responses</h4>
-              <div class="response">
-                <div class="status success">200 OK</div>
-                <pre class="code-block">
-[
-  {
-    "_id": "string",
-    "name": "string",
-    "email": "string",
-    "password": "string",
-    "isAdmin": boolean,
-    "authProvider": "string",
-    "createdAt": "string"
-  }
-]</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">401 Unauthorized</div>
-                <pre class="code-block">
-{
-  "message": "Admin authentication required"
-}</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">403 Forbidden</div>
-                <pre class="code-block">
-{
-  "message": "Admin access denied"
-}</pre
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Admin Delete User -->
-        <div class="endpoint-card glass">
-          <div
-            class="endpoint-header"
-            @click="toggleEndpoint('adminDeleteUser')"
-          >
-            <div class="method post">POST</div>
-            <div class="path">/admin/users/delete/:id</div>
-            <div class="description">Delete a user (admin access)</div>
-            <div
-              class="toggle-icon"
-              :class="{ open: openEndpoints.adminDeleteUser }"
-            >
-              <span></span>
-            </div>
-          </div>
-          <div class="endpoint-details" v-if="openEndpoints.adminDeleteUser">
-            <div class="detail-section">
-              <h4>Path Parameters</h4>
+              <h4>Query Parameters</h4>
               <table class="params-table">
                 <thead>
                   <tr>
@@ -423,22 +223,17 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>id</td>
+                    <td>from</td>
                     <td>string</td>
-                    <td>User's unique identifier to delete</td>
+                    <td>Start date (ISO format)</td>
+                  </tr>
+                  <tr>
+                    <td>to</td>
+                    <td>string</td>
+                    <td>End date (ISO format)</td>
                   </tr>
                 </tbody>
               </table>
-            </div>
-            <div class="detail-section">
-              <h4>Request Body</h4>
-              <pre class="code-block">
-{
-  "adminEmail": "string", // Required
-  "adminPassword": "string", // Required
-  "adminToken": "string" // Required
-}</pre
-              >
             </div>
             <div class="detail-section">
               <h4>Responses</h4>
@@ -446,23 +241,40 @@
                 <div class="status success">200 OK</div>
                 <pre class="code-block">
 {
-  "message": "User deleted successfully"
-}</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">400 Bad Request</div>
-                <pre class="code-block">
-{
-  "message": "Cannot delete yourself"
-}</pre
-                >
-              </div>
-              <div class="response">
-                <div class="status error">401 Unauthorized</div>
-                <pre class="code-block">
-{
-  "message": "Admin authentication required"
+  "userId": "string",
+  "summary": {
+    "totalSessions": 0,
+    "totalTimeSpent": 0, // in seconds
+    "averageSessionDuration": 0, // in seconds
+    "totalPageViews": 0,
+    "totalEvents": 0
+  },
+  "sessions": [
+    {
+      "sessionId": "string",
+      "startTime": "string",
+      "endTime": "string",
+      "duration": 0, // in seconds
+      "pageViews": 0,
+      "events": 0,
+      "platform": "string",
+      "referrer": "string"
+    }
+  ],
+  "topEvents": [
+    {
+      "eventType": "string",
+      "count": 0
+    }
+  ],
+  "activityByDay": [
+    {
+      "date": "string",
+      "sessions": 0,
+      "events": 0,
+      "timeSpent": 0 // in seconds
+    }
+  ]
 }</pre
                 >
               </div>
@@ -478,269 +290,440 @@
           </div>
         </div>
 
-        <!-- Debug Endpoint -->
+        <!-- Get Dashboard Metrics -->
         <div class="endpoint-card glass">
-          <div class="endpoint-header" @click="toggleEndpoint('debug')">
+          <div
+            class="endpoint-header"
+            @click="toggleEndpoint('dashboardMetrics')"
+          >
             <div class="method get">GET</div>
-            <div class="path">/debug</div>
-            <div class="description">Debug information about the API</div>
-            <div class="toggle-icon" :class="{ open: openEndpoints.debug }">
-              <span></span>
-            </div>
-          </div>
-          <div class="endpoint-details" v-if="openEndpoints.debug">
-            <div class="detail-section">
-              <h4>Response</h4>
-              <pre class="code-block">
-{
-  "message": "Debug endpoint working",
-  "timestamp": "2025-03-22T12:34:56.789Z",
-  "environment": "development",
-  "headers": { ... },
-  "googleClientId": "Configured"
-}</pre
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- Google OAuth Authentication -->
-        <div class="endpoint-card glass special">
-          <div class="endpoint-header" @click="toggleEndpoint('googleAuth')">
-            <div class="method special">OAUTH</div>
-            <div class="path">Google Authentication</div>
-            <div class="description">Google OAuth Authentication Flow</div>
+            <div class="path">/dashboard</div>
+            <div class="description">Get aggregated dashboard metrics</div>
             <div
               class="toggle-icon"
-              :class="{ open: openEndpoints.googleAuth }"
+              :class="{ open: openEndpoints.dashboardMetrics }"
             >
               <span></span>
             </div>
           </div>
-          <div class="endpoint-details" v-if="openEndpoints.googleAuth">
+          <div class="endpoint-details" v-if="openEndpoints.dashboardMetrics">
             <div class="detail-section">
-              <h4>Overview</h4>
-              <p>
-                The API supports Google OAuth authentication using the Google
-                Auth Library. The client application should implement Google
-                Sign-In and send the ID token to the server for verification.
-              </p>
-            </div>
-            <div class="detail-section">
-              <h4>Configuration</h4>
-              <p>
-                Server uses the <code>GOOGLE_CLIENT_ID</code> environment
-                variable for OAuth verification.
-              </p>
-              <p>The OAuth client is initialized with:</p>
-              <pre class="code-block">
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);</pre
-              >
-            </div>
-            <div class="detail-section">
-              <h4>Token Verification</h4>
-              <p>The server verifies Google tokens using:</p>
-              <pre class="code-block">
-async function verifyGoogleToken(token) {
-  const ticket = await googleClient.verifyIdToken({
-    idToken: token,
-    audience: GOOGLE_CLIENT_ID,
-  });
-  
-  const payload = ticket.getPayload();
-  return {
-    googleId: payload['sub'],
-    email: payload['email'],
-    name: payload['name'],
-    picture: payload['picture'],
-    verified: payload['email_verified']
-  };
-}</pre
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- Data Store -->
-        <div class="endpoint-card glass special">
-          <div class="endpoint-header" @click="toggleEndpoint('dataStore')">
-            <div class="method special">STORE</div>
-            <div class="path">Data Storage</div>
-            <div class="description">API data persistence implementation</div>
-            <div class="toggle-icon" :class="{ open: openEndpoints.dataStore }">
-              <span></span>
-            </div>
-          </div>
-          <div class="endpoint-details" v-if="openEndpoints.dataStore">
-            <div class="detail-section">
-              <h4>Overview</h4>
-              <p>
-                The API uses a simple JSON file-based data store for
-                persistence. Data is stored in <code>data.json</code> in the
-                server's root directory.
-              </p>
-            </div>
-            <div class="detail-section">
-              <h4>Methods</h4>
-              <table class="methods-table">
+              <h4>Query Parameters</h4>
+              <table class="params-table">
                 <thead>
                   <tr>
-                    <th>Method</th>
+                    <th>Parameter</th>
+                    <th>Type</th>
                     <th>Description</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>load()</code></td>
-                    <td>Loads data from the file system</td>
+                    <td>period</td>
+                    <td>string</td>
+                    <td>Time period (day, week, month, year)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="detail-section">
+              <h4>Responses</h4>
+              <div class="response">
+                <div class="status success">200 OK</div>
+                <pre class="code-block">
+{
+  "period": "string",
+  "activeUsers": {
+    "total": 0,
+    "new": 0,
+    "returning": 0,
+    "trend": 0 // percentage change from previous period
+  },
+  "engagement": {
+    "totalSessions": 0,
+    "averageSessionDuration": 0, // in seconds
+    "bounceRate": 0, // percentage
+    "pageViewsPerSession": 0
+  },
+  "topEvents": [
+    {
+      "eventType": "string",
+      "count": 0
+    }
+  ],
+  "topReferrers": [
+    {
+      "referrer": "string",
+      "sessions": 0,
+      "users": 0
+    }
+  ],
+  "userRetention": {
+    "day1": 0, // percentage
+    "day7": 0,
+    "day30": 0
+  },
+  "timeSeriesData": [
+    {
+      "date": "string",
+      "activeUsers": 0,
+      "sessions": 0,
+      "pageViews": 0,
+      "events": 0
+    }
+  ]
+}</pre
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Segmentation -->
+        <div class="endpoint-card glass">
+          <div
+            class="endpoint-header"
+            @click="toggleEndpoint('eventSegmentation')"
+          >
+            <div class="method post">POST</div>
+            <div class="path">/events/segment</div>
+            <div class="description">Segment users based on events</div>
+            <div
+              class="toggle-icon"
+              :class="{ open: openEndpoints.eventSegmentation }"
+            >
+              <span></span>
+            </div>
+          </div>
+          <div class="endpoint-details" v-if="openEndpoints.eventSegmentation">
+            <div class="detail-section">
+              <h4>Request Body</h4>
+              <pre class="code-block">
+{
+  "eventType": "string", // Required
+  "filters": [
+    {
+      "property": "string",
+      "operator": "string", // equals, notEquals, contains, greaterThan, lessThan
+      "value": "any"
+    }
+  ],
+  "timeRange": {
+    "from": "string", // ISO date
+    "to": "string"    // ISO date
+  },
+  "groupBy": "string" // Optional property to group results by
+}</pre
+              >
+            </div>
+            <div class="detail-section">
+              <h4>Responses</h4>
+              <div class="response">
+                <div class="status success">200 OK</div>
+                <pre class="code-block">
+{
+  "totalUsers": 0,
+  "totalEvents": 0,
+  "segments": [
+    {
+      "segment": "string", // value of groupBy property
+      "users": 0,
+      "events": 0,
+      "percentage": 0 // percentage of total
+    }
+  ],
+  "userIds": [
+    "string"
+  ]
+}</pre
+                >
+              </div>
+              <div class="response">
+                <div class="status error">400 Bad Request</div>
+                <pre class="code-block">
+{
+  "message": "eventType is required"
+}</pre
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Export -->
+        <div class="endpoint-card glass special">
+          <div class="endpoint-header" @click="toggleEndpoint('dataExport')">
+            <div class="method special">EXPORT</div>
+            <div class="path">/export</div>
+            <div class="description">Export analytics data</div>
+            <div
+              class="toggle-icon"
+              :class="{ open: openEndpoints.dataExport }"
+            >
+              <span></span>
+            </div>
+          </div>
+          <div class="endpoint-details" v-if="openEndpoints.dataExport">
+            <div class="detail-section">
+              <h4>Request Body</h4>
+              <pre class="code-block">
+{
+  "dataType": "string", // "events", "sessions", "users"
+  "format": "string",   // "csv", "json"
+  "timeRange": {
+    "from": "string",   // ISO date
+    "to": "string"      // ISO date
+  },
+  "filters": {          // Optional
+    "eventTypes": ["string"],
+    "userIds": ["string"]
+  }
+}</pre
+              >
+            </div>
+            <div class="detail-section">
+              <h4>Responses</h4>
+              <div class="response">
+                <div class="status success">200 OK</div>
+                <p>Returns file download with requested format</p>
+              </div>
+              <div class="response">
+                <div class="status error">400 Bad Request</div>
+                <pre class="code-block">
+{
+  "message": "dataType and format are required"
+}</pre
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-time Analytics -->
+        <div class="endpoint-card glass special">
+          <div class="endpoint-header" @click="toggleEndpoint('realtime')">
+            <div class="method special">REALTIME</div>
+            <div class="path">/realtime</div>
+            <div class="description">Real-time analytics data stream</div>
+            <div class="toggle-icon" :class="{ open: openEndpoints.realtime }">
+              <span></span>
+            </div>
+          </div>
+          <div class="endpoint-details" v-if="openEndpoints.realtime">
+            <div class="detail-section">
+              <h4>Overview</h4>
+              <p>
+                The real-time endpoint provides a WebSocket connection for
+                streaming live analytics data. Connect to this endpoint to
+                receive events as they occur.
+              </p>
+            </div>
+            <div class="detail-section">
+              <h4>Connection</h4>
+              <pre class="code-block">
+WebSocket URL: ws://your-domain.com/api/analytics/realtime
+</pre
+              >
+            </div>
+            <div class="detail-section">
+              <h4>Authentication</h4>
+              <pre class="code-block">
+// Connect with authentication token
+const socket = new WebSocket('ws://your-domain.com/api/analytics/realtime?token=YOUR_AUTH_TOKEN');
+</pre
+              >
+            </div>
+            <div class="detail-section">
+              <h4>Events</h4>
+              <table class="methods-table">
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>connection</code></td>
+                    <td>Emitted when a client connects</td>
                   </tr>
                   <tr>
-                    <td><code>save()</code></td>
-                    <td>Persists data to the file system</td>
+                    <td><code>user_active</code></td>
+                    <td>Emitted when a user becomes active</td>
                   </tr>
                   <tr>
-                    <td><code>getCollection(collection)</code></td>
-                    <td>Gets or creates a collection</td>
+                    <td><code>user_inactive</code></td>
+                    <td>Emitted when a user becomes inactive</td>
                   </tr>
                   <tr>
-                    <td><code>insert(collection, document)</code></td>
-                    <td>Adds a new document to a collection</td>
+                    <td><code>page_view</code></td>
+                    <td>Emitted on page view events</td>
                   </tr>
                   <tr>
-                    <td><code>find(collection, query)</code></td>
-                    <td>Finds documents matching a query</td>
+                    <td><code>custom_event</code></td>
+                    <td>Emitted on custom events</td>
                   </tr>
                   <tr>
-                    <td><code>findOne(collection, query)</code></td>
-                    <td>Finds the first document matching a query</td>
-                  </tr>
-                  <tr>
-                    <td><code>update(collection, query, update)</code></td>
-                    <td>Updates documents matching a query</td>
-                  </tr>
-                  <tr>
-                    <td><code>delete(collection, query)</code></td>
-                    <td>Deletes documents matching a query</td>
+                    <td><code>error</code></td>
+                    <td>Emitted on error</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Default Admin -->
-        <div class="endpoint-card glass special">
-          <div class="endpoint-header" @click="toggleEndpoint('defaultAdmin')">
-            <div class="method special">ADMIN</div>
-            <div class="path">Default Administrator</div>
-            <div class="description">
-              Default administrator account creation
-            </div>
-            <div
-              class="toggle-icon"
-              :class="{ open: openEndpoints.defaultAdmin }"
-            >
-              <span></span>
-            </div>
-          </div>
-          <div class="endpoint-details" v-if="openEndpoints.defaultAdmin">
-            <div class="detail-section">
-              <h4>Default Admin Account</h4>
+      <div class="implementation-section glass">
+        <h2>Implementation Guide</h2>
+        <ul class="implementation-list">
+          <li>
+            <i class="implementation-icon">📊</i>
+            <div>
+              <h4>Client Integration</h4>
               <p>
-                On server initialization, a default admin account is created if
-                no admin exists:
+                Include our analytics script in your application to
+                automatically track page views and user sessions:
               </p>
               <pre class="code-block">
-{
-  "name": "Administrator",
-  "email": "admin@example.com",
-  "password": "admin123", // Should be changed in production!
-  "isAdmin": true,
-  "authProvider": "local",
-  "createdAt": "2025-03-22T12:34:56.789Z"
-}</pre
+&lt;script src="https://cdn.serenity-analytics.com/tracker.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  SerenityAnalytics.init({
+    apiKey: 'YOUR_API_KEY',
+    userId: 'USER_ID', // Optional, set for authenticated users
+    options: {
+      trackPageViews: true,
+      trackClicks: true,
+      trackForms: true
+    }
+  });
+&lt;/script&gt;</pre
               >
-              <div class="warning">
-                <i class="warning-icon">⚠️</i>
-                <span
-                  >The default password should be changed immediately in
-                  production environments.</span
-                >
-              </div>
             </div>
-          </div>
-        </div>
+          </li>
+          <li>
+            <i class="implementation-icon">🔄</i>
+            <div>
+              <h4>Custom Event Tracking</h4>
+              <p>Track custom events in your application:</p>
+              <pre class="code-block">
+// Track a custom event
+SerenityAnalytics.trackEvent('purchase_completed', {
+  productId: '12345',
+  price: 49.99,
+  currency: 'USD'
+});</pre
+              >
+            </div>
+          </li>
+          <li>
+            <i class="implementation-icon">👤</i>
+            <div>
+              <h4>User Identification</h4>
+              <p>Identify users after authentication:</p>
+              <pre class="code-block">
+// Call after user logs in
+SerenityAnalytics.identifyUser({
+  userId: 'user123',
+  traits: {
+    name: 'John Doe',
+    email: 'john@example.com',
+    plan: 'premium'
+  }
+});</pre
+              >
+            </div>
+          </li>
+          <li>
+            <i class="implementation-icon">📱</i>
+            <div>
+              <h4>Mobile SDK Integration</h4>
+              <p>For mobile applications, use our native SDKs:</p>
+              <pre class="code-block">
+// iOS (Swift)
+import SerenityAnalytics
+
+SerenityAnalytics.configure(apiKey: "YOUR_API_KEY")
+SerenityAnalytics.identifyUser(userId: "user123")
+SerenityAnalytics.trackEvent(name: "app_opened", properties: ["version": "1.2.3"])
+
+// Android (Kotlin)
+import com.serenity.analytics
+
+SerenityAnalytics.configure(context, "YOUR_API_KEY")
+SerenityAnalytics.identifyUser("user123")
+SerenityAnalytics.trackEvent("app_opened", mapOf("version" to "1.2.3"))</pre
+              >
+            </div>
+          </li>
+        </ul>
       </div>
 
       <div class="security-section glass">
-        <h2>Security Notes</h2>
+        <h2>Security & Privacy</h2>
         <ul class="security-list">
           <li>
             <i class="security-icon">🔒</i>
             <div>
-              <h4>Authentication</h4>
+              <h4>Data Encryption</h4>
               <p>
-                The API supports both local (email/password) and Google OAuth
-                authentication.
+                All data is encrypted in transit using TLS 1.3 and at rest using
+                AES-256 encryption.
               </p>
             </div>
           </li>
           <li>
-            <i class="security-icon">⚠️</i>
+            <i class="security-icon">🔐</i>
             <div>
-              <h4>Password Storage</h4>
+              <h4>API Authentication</h4>
               <p>
-                This implementation stores passwords in plain text. In
-                production, passwords should be hashed using bcrypt or similar.
+                API access requires authentication using API keys or JWT tokens
+                with appropriate scopes.
               </p>
             </div>
           </li>
           <li>
-            <i class="security-icon">🔑</i>
+            <i class="security-icon">👁️</i>
             <div>
-              <h4>Admin Authentication</h4>
+              <h4>Data Privacy</h4>
               <p>
-                Admin authentication uses a simple Base64 encoded token. In
-                production, use JWT with proper expiration and signing.
+                PII (Personally Identifiable Information) is stored separately
+                and can be anonymized or deleted upon request.
               </p>
             </div>
           </li>
           <li>
-            <i class="security-icon">🌐</i>
+            <i class="security-icon">📝</i>
             <div>
-              <h4>CORS Configuration</h4>
+              <h4>Compliance</h4>
               <p>
-                CORS is configured to allow all origins in development. Restrict
-                this in production.
+                Our analytics system is designed to help with GDPR, CCPA, and
+                other privacy regulation compliance.
               </p>
             </div>
           </li>
         </ul>
       </div>
 
-      <div class="version-badge">API Documentation v1.0.0</div>
+      <div class="version-badge">Analytics API Documentation v1.0.0</div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: "ApiDocumentation",
+  name: "AnalyticsApiDocumentation",
   data() {
     return {
       openEndpoints: {
         status: false,
-        register: false,
-        login: false,
-        getUsers: false,
-        getUserById: false,
-        adminLogin: false,
-        adminGetUsers: false,
-        adminDeleteUser: false,
-        debug: false,
-        googleAuth: false,
-        dataStore: false,
-        defaultAdmin: false,
+        trackEvent: false,
+        userSession: false,
+        getUserAnalytics: false,
+        dashboardMetrics: false,
+        eventSegmentation: false,
+        dataExport: false,
+        realtime: false,
       },
     };
   },
@@ -751,330 +734,20 @@ export default {
   },
 };
 </script>
-
 <style scoped>
 .ajax-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
   padding: 2rem;
-  background: linear-gradient(135deg, #1a237e, #4a148c);
-  color: #fff;
-}
-
-.back-to-dashboard {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-}
-
-.back-button {
-  color: #fff;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  transition: all 0.3s;
-  padding: 0.5rem 1rem;
-}
-
-.back-button:hover {
-  color: #64ffda;
-}
-
-.back-icon {
-  margin-right: 8px;
-}
-
-@media (max-width: 768px) {
-  .back-to-dashboard {
-    top: 10px;
-    left: 10px;
-  }
-}
-
-.main-container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   position: relative;
-  width: 90%;
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border-radius: 15px;
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-  color: #fff;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-size: 2rem;
-}
-
-h2 {
-  color: #64ffda;
-  margin: 1.5rem 0 1rem;
-  font-size: 1.5rem;
-}
-
-.api-section {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.api-section p {
-  margin-bottom: 1rem;
-  opacity: 0.8;
-}
-
-.version-info {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.badge {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-}
-
-.endpoints {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.endpoint-card {
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
-.endpoint-header {
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.endpoint-header:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.method {
-  padding: 0.4rem 0.8rem;
-  border-radius: 4px;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  min-width: 60px;
-  text-align: center;
-  margin-right: 1rem;
-}
-
-.get {
-  background: rgba(97, 175, 254, 0.2);
-  color: #61affe;
-}
-
-.post {
-  background: rgba(73, 204, 144, 0.2);
-  color: #49cc90;
-}
-
-.special {
-  background: rgba(252, 161, 48, 0.2);
-  color: #fca130;
-}
-
-.path {
-  font-family: monospace;
-  font-size: 1rem;
-  margin-right: 1rem;
-  flex: 1;
-}
-
-.description {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-  flex: 2;
-}
-
-.toggle-icon {
-  width: 20px;
-  height: 20px;
-  position: relative;
-  margin-left: 1rem;
-}
-
-.toggle-icon span {
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background-color: rgba(255, 255, 255, 0.5);
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.toggle-icon:before {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background-color: rgba(255, 255, 255, 0.5);
-  top: 50%;
-  transform: translateY(-50%) rotate(90deg);
-  transition: all 0.3s;
-}
-
-.toggle-icon.open:before {
-  transform: translateY(-50%) rotate(0);
-}
-
-.endpoint-details {
-  padding: 0 1rem 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.detail-section {
-  margin-top: 1rem;
-}
-
-.detail-section h4 {
-  color: #64ffda;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-}
-
-.code-block {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 1rem;
-  border-radius: 5px;
-  font-family: monospace;
-  overflow-x: auto;
-  white-space: pre-wrap;
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
-}
-
-.response {
-  margin-bottom: 1rem;
-}
-
-.status {
-  display: inline-block;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.success {
-  background: rgba(73, 204, 144, 0.2);
-  color: #49cc90;
-}
-
-.error {
-  background: rgba(249, 62, 62, 0.2);
-  color: #f93e3e;
-}
-
-.params-table,
-.methods-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.5rem 0;
-}
-
-.params-table th,
-.methods-table th,
-.params-table td,
-.methods-table td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.params-table th,
-.methods-table th {
-  color: #64ffda;
-  font-weight: bold;
-}
-
-.warning {
-  background: rgba(252, 161, 48, 0.2);
-  border-left: 4px solid #fca130;
-  padding: 1rem;
-  margin-top: 1rem;
-  border-radius: 0 4px 4px 0;
-  display: flex;
-  align-items: center;
-}
-
-.warning-icon {
-  margin-right: 0.5rem;
-  font-style: normal;
-}
-
-.security-section {
-  padding: 1.5rem;
-  margin-top: 2rem;
-}
-
-.security-list {
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0 0;
-}
-
-.security-list li {
-  display: flex;
-  margin-bottom: 1.5rem;
-  align-items: flex-start;
-}
-
-.security-icon {
-  margin-right: 1rem;
-  font-size: 1.5rem;
-  font-style: normal;
-}
-
-.security-list h4 {
-  margin: 0 0 0.5rem;
-  color: #64ffda;
-}
-
-.security-list p {
-  margin: 0;
-  opacity: 0.8;
-}
-
-.version-badge {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  color: rgba(255, 255, 255, 0.6);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-}
-
-/* Background circles animation */
+/* Background animation */
 .circles {
   position: absolute;
   top: 0;
@@ -1084,7 +757,6 @@ h2 {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  z-index: -1;
 }
 
 .circles li {
@@ -1093,7 +765,7 @@ h2 {
   list-style: none;
   width: 20px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
   animation: animate 25s linear infinite;
   bottom: -150px;
   border-radius: 50%;
@@ -1104,7 +776,6 @@ h2 {
   width: 80px;
   height: 80px;
   animation-delay: 0s;
-  animation-duration: 20s;
 }
 
 .circles li:nth-child(2) {
@@ -1181,29 +852,423 @@ h2 {
     opacity: 1;
     border-radius: 0;
   }
+
   100% {
     transform: translateY(-1000px) rotate(720deg);
     opacity: 0;
     border-radius: 50%;
   }
 }
-@media (max-width: 768px) {
-  /* ... altri stili responsive ... */
 
-  .back-to-dashboard {
-    top: 10px;
-    left: 10px;
+/* Main container styling */
+.main-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+/* Back to dashboard button */
+.back-to-dashboard {
+  margin-bottom: 2rem;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.back-button:hover {
+  opacity: 1;
+}
+
+.back-icon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* API Section styling */
+.api-section {
+  margin-bottom: 2rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  position: relative;
+  display: inline-block;
+}
+
+h2:after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.version-info {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+/* Endpoint Cards */
+.endpoints {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.endpoint-card {
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.endpoint-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px rgba(31, 38, 135, 0.3);
+}
+
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.method {
+  font-weight: bold;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  min-width: 60px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.get {
+  background-color: #61affe;
+  color: #fff;
+}
+
+.post {
+  background-color: #49cc90;
+  color: #fff;
+}
+
+.put {
+  background-color: #fca130;
+  color: #fff;
+}
+
+.delete {
+  background-color: #f93e3e;
+  color: #fff;
+}
+
+.special {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
+}
+
+.path {
+  font-family: monospace;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.description {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  flex: 2;
+}
+
+.toggle-icon {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon span {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: white;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.toggle-icon:before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: white;
+  top: 0;
+  left: 0;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon:after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: white;
+  bottom: 0;
+  left: 0;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.open:before {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.toggle-icon.open:after {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+.toggle-icon.open span {
+  opacity: 0;
+}
+
+/* Endpoint Details */
+.endpoint-details {
+  padding: 0 1rem 1rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-
-  .back-button {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
-/* Responsive styles */
+
+.detail-section {
+  margin-bottom: 1.5rem;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.code-block {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: monospace;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Response styling */
+.response {
+  margin-bottom: 1rem;
+}
+
+.response:last-child {
+  margin-bottom: 0;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.success {
+  background-color: #49cc90;
+  color: #fff;
+}
+
+.error {
+  background-color: #f93e3e;
+  color: #fff;
+}
+
+/* Tables */
+.params-table,
+.methods-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.params-table th,
+.methods-table th,
+.params-table td,
+.methods-table td {
+  padding: 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.params-table th,
+.methods-table th {
+  background: rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.params-table tr:last-child td,
+.methods-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Warning */
+.warning {
+  background: rgba(255, 193, 7, 0.2);
+  border-left: 4px solid #ffc107;
+  padding: 0.8rem;
+  margin-top: 1rem;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+.warning-icon {
+  margin-right: 0.8rem;
+  font-size: 1.2rem;
+}
+
+/* Security Section */
+.security-section,
+.implementation-section {
+  margin-bottom: 2rem;
+}
+
+.security-list,
+.implementation-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.security-list li,
+.implementation-list li {
+  display: flex;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.security-list li:last-child,
+.implementation-list li:last-child {
+  margin-bottom: 0;
+}
+
+.security-icon,
+.implementation-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.security-list h4,
+.implementation-list h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.security-list p,
+.implementation-list p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Version badge */
+.version-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+}
+
+/* Code elements */
+code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .main-container {
-    width: 95%;
+  .ajax-data {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .glass {
     padding: 1.5rem;
   }
 
@@ -1212,32 +1277,34 @@ h2 {
   }
 
   .method {
-    margin-bottom: 0.5rem;
+    min-width: 50px;
   }
 
   .path {
-    width: 100%;
-    margin-bottom: 0.5rem;
+    flex: 0 0 100%;
+    margin: 0.5rem 0;
   }
 
   .description {
-    width: 100%;
-    margin-bottom: 0.5rem;
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
   }
 
-  h1 {
-    font-size: 1.8rem;
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  .endpoint-header {
+    padding: 0.8rem;
   }
 
   .code-block {
     font-size: 0.8rem;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .ajax-data {
-    background: linear-gradient(135deg, #0d1117, #161b22);
   }
 }
 </style>

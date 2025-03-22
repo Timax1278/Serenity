@@ -3,9 +3,24 @@ const fs = require('fs').promises;
 const path = require('path');
 const cors = require('cors');
 const { OAuth2Client } = require('google-auth-library');
+const http = require('http');
+const WebSocket = require('ws');
 
+// Initialize Express app first
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Now create the HTTP server using the app
+const server = http.createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocket.Server({ server });
+
+// Track connected clients
+const clients = new Set();
+
+// Track visitor count
+let visitorCount = 0;
 
 // Google OAuth client - Usa la variabile d'ambiente o un valore predefinito per test
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'YOUR-CLIENT-ID-HERE.apps.googleusercontent.com';
@@ -114,6 +129,57 @@ const dataStore = {
     return { deletedCount: initialLength - this.data[collection].length };
   }
 };
+
+// Broadcast visitor count to all clients
+function broadcastVisitorCount() {
+  const message = JSON.stringify({
+    type: 'visitor_count',
+    count: visitorCount
+  });
+  
+  for (const client of clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// WebSocket connection handler
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  visitorCount++;
+  console.log(`New client connected. Total visitors: ${visitorCount}`);
+  
+  // Broadcast updated count to all clients
+  broadcastVisitorCount();
+  
+  // Handle incoming messages
+  ws.on('message', (message) => {
+    try {
+      // Convert Buffer to string if necessary
+      const messageStr = message.toString();
+      const data = JSON.parse(messageStr);
+      console.log('Received message:', data);
+      
+      // Handle specific message types if needed
+      if (data.type === 'join_visitor_counter') {
+        console.log('Client joined visitor counter');
+      }
+    } catch (error) {
+      console.error('Error parsing message:', error);
+    }
+  });
+  
+  // Handle client disconnection
+  ws.on('close', () => {
+    clients.delete(ws);
+    visitorCount = Math.max(0, visitorCount - 1);
+    console.log(`Client disconnected. Total visitors: ${visitorCount}`);
+    
+    // Broadcast updated count to all clients
+    broadcastVisitorCount();
+  });
+});
 
 // Crea un admin di default se non esiste
 async function createDefaultAdmin() {
@@ -347,6 +413,7 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ message: 'Server error during login' });
   }
 });
+
 // Google Authentication endpoint
 app.post('/api/google-auth', async (req, res) => {
   try {
@@ -410,6 +477,7 @@ app.post('/api/google-auth', async (req, res) => {
     });
   }
 });
+
 // Update user endpoint
 app.put('/api/users/:id', async (req, res) => {
   try {
@@ -580,190 +648,191 @@ app.post('/api/admin/create-admin', requireAdmin, async (req, res) => {
       createdAt: new Date().toISOString()
     });
     
-// Rimuovi la password dalla risposta
-const { password: _, ...adminWithoutPassword } = newAdmin;
+    // Rimuovi la password dalla risposta
+    const { password: _, ...adminWithoutPassword } = newAdmin;
     
-res.status(201).json({
-  message: 'Admin created successfully',
-  admin: adminWithoutPassword
-});
-} catch (error) {
-console.error('Error creating admin:', error);
-res.status(500).json({ error: 'Failed to create admin' });
-}
+    res.status(201).json({
+      message: 'Admin created successfully',
+      admin: adminWithoutPassword
+    });
+  } catch (error) {
+    console.error('Error creating admin:', error);
+    res.status(500).json({ error: 'Failed to create admin' });
+  }
 });
 
 // Google authentication endpoint (semplice - accetta dati dal client)
-app.post('/api/google-auth', async (req, res) => {
-try {
-const { googleId, email, name, picture, isRegistration } = req.body;
-
-console.log("Received Google auth data:", { 
-  googleId: googleId ? "[PRESENT]" : "[MISSING]", 
-  email, 
-  name, 
-  picture: picture ? "[PRESENT]" : "[MISSING]",
-  isRegistration 
-});
-
-if (!googleId || !email || !name) {
-  return res.status(400).json({ 
-    message: 'GoogleId, Email, and Name are required for Google authentication'
-  });
-}
-
-// Check if user exists
-let user = await dataStore.findOne('users', { email });
-  
-// If user doesn't exist and this is a registration, create new user
-if (!user && isRegistration) {
-  console.log("Creating new user with Google account:", { name, email, googleId });
-  
-  user = await dataStore.insert('users', {
-    name,
-    email,
-    googleId,
-    picture,
-    isAdmin: false, // Default to non-admin for Google auth
-    authProvider: 'google',
-    createdAt: new Date().toISOString()
-  });
-  
-  console.log("Google user created successfully:", user);
-}
-// If user doesn't exist and this is a login attempt
-else if (!user && !isRegistration) {
-  return res.status(401).json({ 
-    message: 'No account exists with this email. Please register first.'
-  });
-}
-// If user exists but doesn't have googleId (user previously registered with email/password)
-else if (user && !user.googleId) {
-  // Link the Google account to the existing user
-  console.log("Linking Google account to existing user:", email);
-  
-  await dataStore.update('users', { email }, {
-    googleId,
-    picture: picture || user.picture,
-    updatedAt: new Date().toISOString()
-  });
-  
-  // Get the updated user
-  user = await dataStore.findOne('users', { email });
-}
-// If user exists with googleId but it doesn't match (someone trying to use same email with different Google account)
-else if (user && user.googleId && user.googleId !== googleId) {
-  return res.status(401).json({ 
-    message: 'This email is already linked to a different Google account' 
-  });
-}
-
-// Verify the user was found or created
-if (!user) {
-  return res.status(500).json({ message: 'Failed to authenticate with Google' });
-}
-
-// Don't send any sensitive data back in the response
-const { password, ...userWithoutPassword } = user;
-res.json(userWithoutPassword);
-} catch (error) {
-console.error('Google authentication error:', error);
-res.status(500).json({ 
-  message: 'Server error during Google authentication',
-  error: error.message 
-});
-}
+app.post('/api/google-auth-simple', async (req, res) => {
+  try {
+    const { googleId, email, name, picture, isRegistration } = req.body;
+    
+    console.log("Received Google auth data:", { 
+      googleId: googleId ? "[PRESENT]" : "[MISSING]", 
+      email, 
+      name, 
+      picture: picture ? "[PRESENT]" : "[MISSING]",
+      isRegistration 
+    });
+    
+    if (!googleId || !email || !name) {
+      return res.status(400).json({ 
+        message: 'GoogleId, Email, and Name are required for Google authentication'
+      });
+    }
+    
+    // Check if user exists
+    let user = await dataStore.findOne('users', { email });
+    
+    // If user doesn't exist and this is a registration, create new user
+    if (!user && isRegistration) {
+      console.log("Creating new user with Google account:", { name, email, googleId });
+      
+      user = await dataStore.insert('users', {
+        name,
+        email,
+        googleId,
+        picture,
+        isAdmin: false, // Default to non-admin for Google auth
+        authProvider: 'google',
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log("Google user created successfully:", user);
+    }
+    // If user doesn't exist and this is a login attempt
+    else if (!user && !isRegistration) {
+      return res.status(401).json({ 
+        message: 'No account exists with this email. Please register first.'
+      });
+    }
+    // If user exists but doesn't have googleId (user previously registered with email/password)
+    else if (user && !user.googleId) {
+      // Link the Google account to the existing user
+      console.log("Linking Google account to existing user:", email);
+      
+      await dataStore.update('users', { email }, {
+        googleId,
+        picture: picture || user.picture,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Get the updated user
+      user = await dataStore.findOne('users', { email });
+    }
+    // If user exists with googleId but it doesn't match (someone trying to use same email with different Google account)
+    else if (user && user.googleId && user.googleId !== googleId) {
+      return res.status(401).json({ 
+        message: 'This email is already linked to a different Google account' 
+      });
+    }
+    
+    // Verify the user was found or created
+    if (!user) {
+      return res.status(500).json({ message: 'Failed to authenticate with Google' });
+    }
+    
+    // Don't send any sensitive data back in the response
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Google authentication error:', error);
+    res.status(500).json({ 
+      message: 'Server error during Google authentication',
+      error: error.message 
+    });
+  }
 });
 
 // Google authentication with token verification (more secure)
 app.post('/api/google-auth-secure', async (req, res) => {
-try {
-const { token, isRegistration } = req.body;
-
-if (!token) {
-  return res.status(400).json({ message: 'Google token is required' });
-}
-
-// Verify the token with Google
-let googleUser;
-try {
-  googleUser = await verifyGoogleToken(token);
-} catch (error) {
-  return res.status(401).json({ message: 'Invalid Google token' });
-}
-
-if (!googleUser.verified) {
-  return res.status(400).json({ message: 'Google email is not verified' });
-}
-
-const { googleId, email, name, picture } = googleUser;
-
-// Check if user exists
-let user = await dataStore.findOne('users', { email });
-
-// If user doesn't exist and this is a registration, create new user
-if (!user && isRegistration) {
-  console.log("Creating new user with Google account:", { name, email, googleId });
-  
-  user = await dataStore.insert('users', {
-    name,
-    email,
-    googleId,
-    picture,
-    isAdmin: false, // Default to non-admin for Google auth
-    authProvider: 'google',
-    createdAt: new Date().toISOString()
-  });
-  
-  console.log("Google user created successfully:", user);
-}
-// If user doesn't exist and this is a login attempt
-else if (!user && !isRegistration) {
-  return res.status(401).json({ 
-    message: 'No account exists with this email. Please register first.'
-  });
-}
-// If user exists but doesn't have googleId (user previously registered with email/password)
-else if (user && !user.googleId) {
-  // Link the Google account to the existing user
-  console.log("Linking Google account to existing user:", email);
-  
-  await dataStore.update('users', { email }, {
-    googleId,
-    picture: picture || user.picture,
-    updatedAt: new Date().toISOString()
-  });
-  
-  // Get the updated user
-  user = await dataStore.findOne('users', { email });
-}
-// If user exists with googleId but it doesn't match (someone trying to use same email with different Google account)
-else if (user && user.googleId && user.googleId !== googleId) {
-  return res.status(401).json({ 
-    message: 'This email is already linked to a different Google account' 
-  });
-}
-
-// Verify the user was found or created
-if (!user) {
-  return res.status(500).json({ message: 'Failed to authenticate with Google' });
-}
-
-// Don't send any sensitive data back in the response
-const { password, ...userWithoutPassword } = user;
-res.json(userWithoutPassword);
-} catch (error) {
-console.error('Google authentication error:', error);
-res.status(500).json({ 
-  message: 'Server error during Google authentication',
-  error: error.message 
-});
-}
+  try {
+    const { token, isRegistration } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ message: 'Google token is required' });
+    }
+    
+    // Verify the token with Google
+    let googleUser;
+    try {
+      googleUser = await verifyGoogleToken(token);
+    } catch (error) {
+      return res.status(401).json({ message: 'Invalid Google token' });
+    }
+    
+    if (!googleUser.verified) {
+      return res.status(400).json({ message: 'Google email is not verified' });
+    }
+    
+    const { googleId, email, name, picture } = googleUser;
+    
+    // Check if user exists
+    let user = await dataStore.findOne('users', { email });
+    
+    // If user doesn't exist and this is a registration, create new user
+    if (!user && isRegistration) {
+      console.log("Creating new user with Google account:", { name, email, googleId });
+      
+      user = await dataStore.insert('users', {
+        name,
+        email,
+        googleId,
+        picture,
+        isAdmin: false, // Default to non-admin for Google auth
+        authProvider: 'google',
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log("Google user created successfully:", user);
+    }
+    // If user doesn't exist and this is a login attempt
+    else if (!user && !isRegistration) {
+      return res.status(401).json({ 
+        message: 'No account exists with this email. Please register first.'
+      });
+    }
+    // If user exists but doesn't have googleId (user previously registered with email/password)
+    else if (user && !user.googleId) {
+      // Link the Google account to the existing user
+      console.log("Linking Google account to existing user:", email);
+      
+      await dataStore.update('users', { email }, {
+        googleId,
+        picture: picture || user.picture,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Get the updated user
+      user = await dataStore.findOne('users', { email });
+    }
+    // If user exists with googleId but it doesn't match (someone trying to use same email with different Google account)
+    else if (user && user.googleId && user.googleId !== googleId) {
+      return res.status(401).json({ 
+        message: 'This email is already linked to a different Google account' 
+      });
+    }
+    
+    // Verify the user was found or created
+    if (!user) {
+      return res.status(500).json({ message: 'Failed to authenticate with Google' });
+    }
+    
+    // Don't send any sensitive data back in the response
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Google authentication error:', error);
+    res.status(500).json({ 
+      message: 'Server error during Google authentication',
+      error: error.message 
+    });
+  }
 });
 
 // Start the server
-app.listen(port, () => {
-console.log(`Server running on port ${port}`);
-console.log(`Default admin credentials: admin@example.com / admin123`);
-console.log(`WARNING: Change the default admin password in production!`);
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log(`WebSocket server running on ws://localhost:${port}/ws`);
+  console.log(`Default admin credentials: admin@example.com / admin123`);
+  console.log(`WARNING: Change the default admin password in production!`);
 });

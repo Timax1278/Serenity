@@ -1,54 +1,75 @@
 <template>
-  <div class="dashboard">
+  <div class="profile-page dashboard-page">
+    <!-- Background elements -->
     <ul class="circles">
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
+      <li v-for="n in 10" :key="n"></li>
     </ul>
 
-    <h1>Welcome to the Dashboard</h1>
-    <p>Select a feature below:</p>
-    <div class="feature-buttons">
-      <router-link to="/groups-page">
-        <button class="btn">Go to Groups</button>
-      </router-link>
-      <router-link to="/meditation-library">
-        <button class="btn">Meditation Library</button>
-      </router-link>
-      <router-link to="/appointments-page">
-        <button class="btn">Appointments</button>
-      </router-link>
-      <router-link to="/user-profile">
-        <button class="btn">Your Profile</button>
-      </router-link>
-
-      <!-- Nuovi tasti aggiunti -->
-      <router-link to="/ajax-data">
-        <button class="btn">AJAX Data</button>
-      </router-link>
-      <router-link to="/third-party-api">
-        <button class="btn">Third Party API</button>
-      </router-link>
-      <router-link to="/swagger-docs">
-        <button class="btn">Swagger Docs</button>
-      </router-link>
-      <router-link to="/websocket-counter">
-        <button class="btn">Real-time Visitors</button>
-      </router-link>
+    <!-- Brand logo -->
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <div class="brand-text">Serenity</div>
     </div>
 
-    <div class="visitor-counter">
-      <p>Current visitors: {{ visitorCount }}</p>
+    <h1 class="typewriter">Welcome to the Dashboard</h1>
+    <p>Select a feature below to begin your wellness journey</p>
+
+    <div class="glass dashboard-container">
+      <div class="feature-grid">
+        <router-link to="/groups-page" class="feature-card">
+          <div class="feature-icon groups-icon"></div>
+          <h3>Groups</h3>
+          <p>Join meditation groups and connect with others</p>
+        </router-link>
+
+        <router-link to="/meditation-library" class="feature-card">
+          <div class="feature-icon meditation-icon"></div>
+          <h3>Meditation Library</h3>
+          <p>Explore guided meditations and relaxation techniques</p>
+        </router-link>
+
+        <router-link to="/appointments-page" class="feature-card">
+          <div class="feature-icon appointments-icon"></div>
+          <h3>Appointments</h3>
+          <p>Schedule sessions with wellness professionals</p>
+        </router-link>
+
+        <router-link to="/user-profile" class="feature-card">
+          <div class="feature-icon profile-icon"></div>
+          <h3>Your Profile</h3>
+          <p>View and update your personal information</p>
+        </router-link>
+
+        <router-link to="/ajax-data" class="feature-card">
+          <div class="feature-icon ajax-icon"></div>
+          <h3>AJAX Data</h3>
+          <p>View dynamic content loaded from the server</p>
+        </router-link>
+
+        <router-link to="/third-party-api" class="feature-card">
+          <div class="feature-icon api-icon"></div>
+          <h3>Third Party API</h3>
+          <p>Explore integrations with external services</p>
+        </router-link>
+
+        <router-link to="/swagger-docs" class="feature-card">
+          <div class="feature-icon docs-icon"></div>
+          <h3>Swagger Docs</h3>
+          <p>API documentation and testing tools</p>
+        </router-link>
+
+        <router-link to="/websocket-counter" class="feature-card">
+          <div class="feature-icon realtime-icon"></div>
+          <h3>Real-time Visitors</h3>
+          <p>See who's online in the Serenity community</p>
+        </router-link>
+      </div>
+
+      <button class="logout-button" @click="logout">Logout</button>
     </div>
 
-    <button class="btn-logout" @click="logout">Logout</button>
+    <!-- Version badge -->
+    <div class="version-badge">v1.0.0</div>
   </div>
 </template>
 
@@ -67,23 +88,23 @@ export default {
 
     const logout = () => {
       store.dispatch("auth/logout");
-      router.push("/"); // Redirigi alla HomePage dopo il logout
+      router.push("/"); // Redirect to HomePage after logout
     };
 
     onMounted(() => {
-      // Inizializza WebSocket per il contatore visitatori
+      // Initialize WebSocket for visitor counter
       initWebSocket();
     });
 
     onUnmounted(() => {
-      // Chiudi WebSocket quando il componente viene smontato
+      // Close WebSocket when component is unmounted
       if (socket) {
         socket.close();
       }
     });
 
     const initWebSocket = () => {
-      // Usa variabile d'ambiente per l'URL del WebSocket
+      // Use environment variable for WebSocket URL
       const wsUrl =
         process.env.VUE_APP_WEBSOCKET_URL || "ws://localhost:8080/visitors";
       socket = new WebSocket(wsUrl);
@@ -111,180 +132,19 @@ export default {
 </script>
 
 <style scoped>
-.dashboard {
-  min-height: 100vh;
+.profile-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  min-height: 100vh;
   padding: 2rem;
-  background: linear-gradient(135deg, #1a237e, #4a148c);
-  color: #fff;
-  position: relative;
-  overflow: hidden;
-}
-
-h1 {
-  font-size: 2.5rem;
-  color: #fff;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  animation: fadeIn 1.2s ease-out;
-  text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  animation: fadeIn 1.4s ease-out;
-}
-
-.feature-buttons {
-  margin-top: 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-  max-width: 800px;
-  width: 90%;
-  animation: fadeIn 1.6s ease-out;
-}
-
-.feature-buttons .btn {
-  padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  min-width: 180px;
-  text-align: center;
   position: relative;
   overflow: hidden;
 }
 
-.feature-buttons .btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-  color: #64ffda;
-}
-
-.feature-buttons .btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: 0.5s;
-}
-
-.feature-buttons .btn:hover::before {
-  left: 100%;
-}
-
-.visitor-counter {
-  margin-top: 1.5rem;
-  padding: 0.8rem 1.5rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 15px;
-  display: inline-block;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  animation: pulse 2s infinite alternate;
-}
-
-@keyframes pulse {
-  from {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  }
-  to {
-    box-shadow: 0 10px 30px rgba(100, 255, 218, 0.3);
-  }
-}
-
-.visitor-counter p {
-  margin: 0;
-  font-weight: bold;
-  color: #64ffda;
-}
-
-.btn-logout {
-  margin-top: 3rem;
-  padding: 0.8rem 1.5rem;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 180px;
-  position: relative;
-  overflow: hidden;
-  animation: fadeIn 1.8s ease-out;
-}
-
-.btn-logout:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
-}
-
-.btn-logout::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.5);
-  opacity: 0;
-  border-radius: 100%;
-  transform: scale(1, 1) translate(-50%);
-  transform-origin: 50% 50%;
-}
-
-.btn-logout:hover::after {
-  animation: ripple 1s ease-out;
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(0, 0);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(20, 20);
-    opacity: 0;
-  }
-}
-
-/* Background circles animation */
+/* Background animation */
 .circles {
   position: absolute;
   top: 0;
@@ -294,7 +154,6 @@ p {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  z-index: -1;
 }
 
 .circles li {
@@ -303,7 +162,7 @@ p {
   list-style: none;
   width: 20px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
   animation: animate 25s linear infinite;
   bottom: -150px;
   border-radius: 50%;
@@ -314,8 +173,6 @@ p {
   width: 80px;
   height: 80px;
   animation-delay: 0s;
-  animation-duration: 20s;
-  background: rgba(100, 255, 218, 0.1);
 }
 
 .circles li:nth-child(2) {
@@ -331,7 +188,6 @@ p {
   width: 20px;
   height: 20px;
   animation-delay: 4s;
-  background: rgba(100, 255, 218, 0.1);
 }
 
 .circles li:nth-child(4) {
@@ -347,7 +203,6 @@ p {
   width: 20px;
   height: 20px;
   animation-delay: 0s;
-  background: rgba(100, 255, 218, 0.1);
 }
 
 .circles li:nth-child(6) {
@@ -362,7 +217,6 @@ p {
   width: 150px;
   height: 150px;
   animation-delay: 7s;
-  background: rgba(100, 255, 218, 0.1);
 }
 
 .circles li:nth-child(8) {
@@ -379,7 +233,6 @@ p {
   height: 15px;
   animation-delay: 2s;
   animation-duration: 35s;
-  background: rgba(100, 255, 218, 0.1);
 }
 
 .circles li:nth-child(10) {
@@ -396,6 +249,7 @@ p {
     opacity: 1;
     border-radius: 0;
   }
+
   100% {
     transform: translateY(-1000px) rotate(720deg);
     opacity: 0;
@@ -403,177 +257,348 @@ p {
   }
 }
 
-/* Aggiungi effetto di comparsa graduale per i bottoni */
-.feature-buttons .btn:nth-child(1) {
-  animation: slideUp 0.4s ease-out 0.1s both;
-}
-.feature-buttons .btn:nth-child(2) {
-  animation: slideUp 0.4s ease-out 0.2s both;
-}
-.feature-buttons .btn:nth-child(3) {
-  animation: slideUp 0.4s ease-out 0.3s both;
-}
-.feature-buttons .btn:nth-child(4) {
-  animation: slideUp 0.4s ease-out 0.4s both;
-}
-.feature-buttons .btn:nth-child(5) {
-  animation: slideUp 0.4s ease-out 0.5s both;
-}
-.feature-buttons .btn:nth-child(6) {
-  animation: slideUp 0.4s ease-out 0.6s both;
-}
-.feature-buttons .btn:nth-child(7) {
-  animation: slideUp 0.4s ease-out 0.7s both;
-}
-.feature-buttons .btn:nth-child(8) {
-  animation: slideUp 0.4s ease-out 0.8s both;
+/* Brand styling */
+.brand {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-@keyframes slideUp {
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  margin-right: 10px;
+  background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.brand-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid white;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    width: 0;
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    width: 100%;
   }
 }
 
-/* Aggiungi effetto hover 3D */
-.feature-buttons .btn {
-  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-style: preserve-3d;
-  perspective: 1000px;
-}
-
-.feature-buttons .btn:hover {
-  transform: translateY(-5px) rotateX(5deg);
-}
-
-/* Aggiungi un sottile bordo brillante */
-.dashboard::before {
-  content: "";
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(
-    45deg,
-    #64ffda,
-    transparent,
-    #64ffda,
-    transparent
-  );
-  z-index: -1;
-  background-size: 400%;
-  animation: glowing 20s linear infinite;
-  opacity: 0.3;
-}
-
-@keyframes glowing {
-  0% {
-    background-position: 0 0;
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
   }
   50% {
-    background-position: 400% 0;
-  }
-  100% {
-    background-position: 0 0;
+    border-color: white;
   }
 }
 
-/* Aggiungi effetto di evidenziazione al passaggio del mouse */
-.feature-buttons .btn {
+p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  opacity: 0.9;
+}
+
+/* Glass effect container */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  width: 100%;
+  max-width: 1000px;
+  margin-bottom: 2rem;
   position: relative;
 }
 
-.feature-buttons .btn::after {
+/* Dashboard specific styles */
+.dashboard-page .glass {
+  padding: 2.5rem;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-decoration: none;
+  color: white;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.feature-icon::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.9;
+}
+
+.feature-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 0;
+}
+
+/* Feature icons */
+.groups-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.62c0-1.17.68-2.25 1.76-2.73 1.17-.51 2.61-.9 4.24-.9zm0-10C13.66 2.75 15 4.09 15 5.75S13.66 8.75 12 8.75 9 7.41 9 5.75 10.34 2.75 12 2.75zM6 9.5c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm-2 8.5h3v-1.62c0-.83-.36-1.59-.95-2.11-.72.16-1.39.38-2.05.62v3.11zm14-12.5c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm2 12.5v-3.11c-.66-.24-1.33-.46-2.05-.62-.59.52-.95 1.28-.95 2.11V18h3z'/%3E%3C/svg%3E");
+}
+
+.meditation-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z'/%3E%3C/svg%3E");
+}
+
+.appointments-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
+}
+
+.profile-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
+}
+
+.ajax-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z'/%3E%3C/svg%3E");
+}
+
+.api-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z'/%3E%3C/svg%3E");
+}
+
+.docs-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E");
+}
+
+.realtime-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
+}
+
+/* Visitor counter */
+.visitor-counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  margin: 1rem 0 2rem;
+  position: relative;
+}
+
+.visitor-counter p {
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.pulse-animation {
+  width: 12px;
+  height: 12px;
+  background-color: #4caf50;
+  border-radius: 50%;
+  margin-right: 15px;
+  position: relative;
+}
+
+.pulse-animation::before {
+  content: "";
+  position: absolute;
   width: 100%;
   height: 100%;
-  border-radius: 30px;
-  opacity: 0;
-  transition: all 0.5s;
-  box-shadow: 0 0 15px 3px rgba(100, 255, 218, 0.6);
+  border-radius: 50%;
+  background-color: #4caf50;
+  animation: pulse 2s infinite;
+  opacity: 0.7;
+  left: 0;
+  top: 0;
 }
 
-.feature-buttons .btn:hover::after {
-  opacity: 1;
-}
-
-/* Aggiungi animazione per il contatore visitatori */
-@keyframes countUp {
-  from {
-    transform: scale(0.8);
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(2);
     opacity: 0;
   }
-  to {
+  100% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 0;
   }
 }
 
-.visitor-counter {
-  animation: countUp 0.5s ease-out 2s both;
+/* Glow effect */
+.glow {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  font-weight: 600;
 }
 
-/* Responsive styles */
-@media (max-width: 768px) {
-  .feature-buttons {
-    width: 95%;
+/* Logout button */
+.logout-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  width: auto;
+  margin-top: 1rem;
+}
+
+.logout-button:hover {
+  background: rgba(244, 67, 54, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.2);
+}
+
+/* Version badge */
+.version-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .feature-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
   }
 
-  .feature-buttons .btn {
-    width: 100%;
-    min-width: unset;
+  .feature-card {
+    padding: 1.2rem;
+  }
+
+  .feature-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .feature-card h3 {
+    font-size: 1rem;
+  }
+
+  .feature-card p {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-page {
+    padding: 1rem;
   }
 
   h1 {
     font-size: 2rem;
   }
-}
 
-/* Aggiungi effetto di luce per il logout */
-.btn-logout {
-  position: relative;
-}
-
-.btn-logout::before {
-  content: "";
-  position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
-  background: linear-gradient(45deg, #e74c3c, #c0392b);
-  z-index: -1;
-  border-radius: 35px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.btn-logout:hover::before {
-  opacity: 0.4;
-  animation: pulse-red 2s infinite;
-}
-
-@keyframes pulse-red {
-  0% {
-    transform: scale(1);
-    opacity: 0.4;
+  .glass {
+    padding: 1.5rem;
   }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.2;
+
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  100% {
-    transform: scale(1);
-    opacity: 0.4;
+
+  .dashboard-page .glass {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .brand-text {
+    font-size: 1.2rem;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .visitor-counter {
+    padding: 0.8rem 1.2rem;
   }
 }
 </style>

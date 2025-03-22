@@ -1,54 +1,64 @@
 <template>
-  <div class="api-page">
+  <div class="profile-page quote-page">
     <!-- Background elements -->
     <ul class="circles">
       <li v-for="n in 10" :key="n"></li>
     </ul>
 
-    <div class="glass main-container">
-      <h1>Citazioni Inspirazionali</h1>
+    <!-- Brand logo -->
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <div class="brand-text">Serenity</div>
+    </div>
 
+    <h1 class="typewriter">Inspirational Quotes</h1>
+    <p>Discover wisdom and motivation for your mindfulness journey</p>
+
+    <div class="glass main-container">
       <div class="back-link">
-        <router-link to="/dashboard-page">← Torna alla Dashboard</router-link>
+        <router-link to="/dashboard-page">
+          <span class="back-arrow">←</span> Return to Dashboard
+        </router-link>
       </div>
-      <!-- Selettore del tipo di citazione -->
+
+      <!-- Category selector -->
       <div class="category-selector">
         <button
           @click="setQuoteType('any')"
           :class="{ active: quoteType === 'any' }"
           class="category-btn"
         >
-          Tutte le citazioni
+          All Quotes
         </button>
         <button
           @click="setQuoteType('motivational')"
           :class="{ active: quoteType === 'motivational' }"
           class="category-btn"
         >
-          Motivazionali
+          Motivational
         </button>
         <button
           @click="setQuoteType('wisdom')"
           :class="{ active: quoteType === 'wisdom' }"
           class="category-btn"
         >
-          Saggezza
+          Wisdom
         </button>
       </div>
 
-      <!-- Contenitore della citazione -->
+      <!-- Quote container -->
       <div
         class="quote-container"
         :class="{ 'fade-in': !loadingQuote && quote }"
       >
         <div v-if="loadingQuote" class="loading-animation">
           <div class="spinner"></div>
-          <p>Ricerca della saggezza...</p>
+          <p>Searching for wisdom...</p>
         </div>
 
         <div v-else-if="quoteError" class="error shake">
           <p>{{ quoteError }}</p>
-          <small>Verifica la tua connessione.</small>
+          <small>Please check your connection.</small>
         </div>
 
         <div
@@ -89,11 +99,11 @@
         </div>
 
         <div v-else class="empty-quote">
-          <p>Premi il pulsante per generare una citazione</p>
+          <p>Press the button to generate a quote</p>
         </div>
       </div>
 
-      <!-- Pulsante per generare citazione -->
+      <!-- Quote actions -->
       <div class="quote-actions">
         <button
           @click="fetchQuote"
@@ -116,7 +126,7 @@
             </svg>
           </span>
           <span class="btn-text">{{
-            loadingQuote ? "Generazione..." : "Nuova Citazione"
+            loadingQuote ? "Generating..." : "New Quote"
           }}</span>
         </button>
 
@@ -154,13 +164,13 @@
               />
             </svg>
           </span>
-          <span class="btn-text">{{ copied ? "Copiato!" : "Copia" }}</span>
+          <span class="btn-text">{{ copied ? "Copied!" : "Copy" }}</span>
         </button>
       </div>
 
-      <!-- Storia delle citazioni -->
+      <!-- Quote history -->
       <div v-if="quoteHistory.length > 0" class="quote-history">
-        <h2>Citazioni Precedenti</h2>
+        <h2>Previous Quotes</h2>
         <div class="history-list">
           <div
             v-for="(historyQuote, index) in quoteHistory"
@@ -183,7 +193,7 @@
   </div>
 </template>
 <script>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import axios from "axios";
 
 export default {
@@ -197,10 +207,10 @@ export default {
     const copied = ref(false);
     const quoteType = ref("any"); // 'motivational', 'wisdom', 'any'
 
-    // Chiave API fissa inserita direttamente nel codice
+    // Fixed API key
     const API_KEY = "eDqrIYkmabQwRHqBkTJiZA==ZkF1iiPTN3bl6XR6";
 
-    // Parole chiave per categorizzare le citazioni
+    // Keywords to categorize quotes
     const motivationalKeywords = [
       "success",
       "achieve",
@@ -241,18 +251,18 @@ export default {
       "mindfulness",
     ];
 
-    // Funzione per determinare il tipo di citazione in base al contenuto
+    // Function to determine quote type based on content
     const categorizeQuote = (text) => {
       text = text.toLowerCase();
 
-      // Controlla parole chiave motivazionali
+      // Check motivational keywords
       for (const keyword of motivationalKeywords) {
         if (text.includes(keyword.toLowerCase())) {
           return "motivational";
         }
       }
 
-      // Controlla parole chiave di saggezza
+      // Check wisdom keywords
       for (const keyword of wisdomKeywords) {
         if (text.includes(keyword.toLowerCase())) {
           return "wisdom";
@@ -262,7 +272,7 @@ export default {
       return "other";
     };
 
-    // Funzione per impostare il tipo di citazione desiderato
+    // Function to set the desired quote type
     const setQuoteType = (type) => {
       quoteType.value = type;
       fetchQuote();
@@ -272,7 +282,7 @@ export default {
       loadingQuote.value = true;
       quoteError.value = null;
 
-      // Massimo numero di tentativi per trovare una citazione del tipo desiderato
+      // Maximum number of attempts to find a quote of the desired type
       const maxAttempts = 5;
       let attempts = 0;
       let foundMatchingQuote = false;
@@ -281,7 +291,7 @@ export default {
         attempts++;
 
         try {
-          // Utilizziamo API Ninjas senza il parametro category (che è solo per premium)
+          // Use API Ninjas without category parameter (premium only)
           const response = await axios.get(
             "https://api.api-ninjas.com/v1/quotes",
             {
@@ -291,32 +301,32 @@ export default {
             }
           );
 
-          console.log("Risposta API:", response.data);
+          console.log("API Response:", response.data);
 
-          // API Ninjas restituisce un array, prendiamo il primo elemento
+          // API Ninjas returns an array, take the first element
           const quoteData = response.data[0];
 
-          // Categorizza la citazione in base al contenuto
+          // Categorize the quote based on content
           const category = categorizeQuote(quoteData.quote);
 
-          // Se l'utente ha richiesto un tipo specifico di citazione,
-          // verifica se corrisponde
+          // If the user requested a specific type of quote,
+          // check if it matches
           if (
             quoteType.value === "any" ||
             (quoteType.value === "motivational" &&
               category === "motivational") ||
             (quoteType.value === "wisdom" && category === "wisdom")
           ) {
-            // Salva la citazione corrente nella cronologia se esiste
+            // Save current quote to history if it exists
             if (quote.value) {
               quoteHistory.value.unshift(quote.value);
-              // Mantieni solo le ultime 5 citazioni
+              // Keep only the last 5 quotes
               if (quoteHistory.value.length > 5) {
                 quoteHistory.value.pop();
               }
             }
 
-            // Adatta il formato per corrispondere alla struttura che usiamo
+            // Adapt format to match our structure
             quote.value = {
               content: quoteData.quote,
               author: quoteData.author,
@@ -325,69 +335,63 @@ export default {
 
             foundMatchingQuote = true;
 
-            // Attiva l'animazione di pulse
+            // Activate pulse animation
             newQuoteLoaded.value = true;
             setTimeout(() => {
               newQuoteLoaded.value = false;
             }, 1000);
 
-            console.log("Citazione ricevuta:", quote.value);
+            console.log("Quote received:", quote.value);
           } else {
             console.log(
-              `Citazione non corrisponde al tipo richiesto (${quoteType.value}), riprovo...`
+              `Quote doesn't match requested type (${quoteType.value}), retrying...`
             );
-            // Continuiamo il ciclo per trovare una citazione del tipo desiderato
+            // Continue the loop to find a quote of the desired type
           }
         } catch (err) {
-          console.error("Errore durante il caricamento della citazione:", err);
+          console.error("Error loading quote:", err);
 
-          // Messaggio di errore più specifico
+          // More specific error message
           if (err.response) {
-            quoteError.value = `Errore API (${err.response.status}): ${
-              err.response.data?.message || "Errore nella richiesta"
+            quoteError.value = `API Error (${err.response.status}): ${
+              err.response.data?.message || "Request error"
             }`;
-            console.log("Dettagli errore:", err.response.data);
+            console.log("Error details:", err.response.data);
           } else if (err.request) {
             quoteError.value =
-              "Nessuna risposta dal server. Verifica la tua connessione internet.";
+              "No response from server. Check your internet connection.";
           } else {
-            quoteError.value = `Errore: ${err.message}`;
+            quoteError.value = `Error: ${err.message}`;
           }
 
-          // Interrompiamo il ciclo in caso di errore
+          // Break the loop in case of error
           break;
         }
       }
 
-      // Se non abbiamo trovato una citazione del tipo desiderato dopo vari tentativi
+      // If we didn't find a quote of the desired type after several attempts
       if (!foundMatchingQuote && !quoteError.value) {
-        quoteError.value = `Non è stato possibile trovare una citazione "${quoteType.value}" dopo ${maxAttempts} tentativi. Riprova.`;
+        quoteError.value = `Unable to find a "${quoteType.value}" quote after ${maxAttempts} attempts. Please try again.`;
       }
 
       loadingQuote.value = false;
     };
 
     const restoreQuote = (historyQuote) => {
-      // Rimuovi dalla storia
+      // Remove from history
       quoteHistory.value = quoteHistory.value.filter((q) => q !== historyQuote);
 
-      // Salva la citazione corrente nella cronologia
+      // Save current quote to history
       if (quote.value) {
         quoteHistory.value.unshift(quote.value);
-        // Mantieni solo le ultime 5 citazioni
+        // Keep only the last 5 quotes
         if (quoteHistory.value.length > 5) {
           quoteHistory.value.pop();
         }
       }
 
-      // Imposta la citazione selezionata come corrente
+      // Set the selected history quote as current
       quote.value = historyQuote;
-
-      // Attiva l'animazione di pulse
-      newQuoteLoaded.value = true;
-      setTimeout(() => {
-        newQuoteLoaded.value = false;
-      }, 1000);
     };
 
     const copyToClipboard = () => {
@@ -395,21 +399,22 @@ export default {
 
       const textToCopy = `"${quote.value.content}" — ${quote.value.author}`;
 
-      navigator.clipboard
-        .writeText(textToCopy)
-        .then(() => {
+      navigator.clipboard.writeText(textToCopy).then(
+        () => {
           copied.value = true;
           setTimeout(() => {
             copied.value = false;
           }, 2000);
-        })
-        .catch((err) => {
-          console.error("Errore nella copia: ", err);
-        });
+        },
+        (err) => {
+          console.error("Could not copy text: ", err);
+        }
+      );
     };
 
     const getCurrentDate = () => {
-      return new Date().toLocaleDateString("it-IT", {
+      const now = new Date();
+      return now.toLocaleDateString(undefined, {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -417,15 +422,9 @@ export default {
       });
     };
 
-    // Carica una citazione all'avvio
+    // Fetch a quote on component mount
     onMounted(() => {
-      // Non carichiamo automaticamente la prima citazione
-      // L'utente dovrà cliccare il pulsante
-    });
-
-    // Resetta lo stato di copia quando cambia la citazione
-    watch(quote, () => {
-      copied.value = false;
+      fetchQuote();
     });
 
     return {
@@ -445,382 +444,21 @@ export default {
   },
 };
 </script>
+
 <style scoped>
-.api-page {
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
   padding: 2rem;
-  background: linear-gradient(135deg, #1a237e, #4a148c);
-  color: #fff;
-}
-
-.main-container {
-  width: 90%;
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border-radius: 15px;
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-  color: #fff;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-size: 2rem;
-}
-
-h2 {
-  color: #64ffda;
-  margin: 2rem 0 1rem;
-  text-align: center;
-  font-size: 1.5rem;
-}
-
-.back-link {
-  margin-bottom: 1.5rem;
-  text-align: left;
-}
-
-.back-link a {
-  color: #fff;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  transition: all 0.3s;
-}
-
-.back-link a:hover {
-  color: #64ffda;
-}
-
-/* Contenitore della citazione */
-.quote-container {
-  min-height: 250px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 2rem 0;
-  transition: opacity 0.5s;
-}
-
-.fade-in {
-  animation: fadeIn 0.8s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.quote-card {
-  width: 100%;
-  padding: 2rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-.category-selector {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin: 1.5rem 0;
-  flex-wrap: wrap;
-}
-
-.category-btn {
-  padding: 0.5rem 1.2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.category-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-}
-
-.category-btn.active {
-  background: rgba(100, 255, 218, 0.2);
-  border-color: rgba(100, 255, 218, 0.5);
-  color: #64ffda;
-}
-
-.quote-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-}
-
-.pulse {
-  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1);
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.03);
-  }
-}
-
-.quote-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.quote-icon svg {
-  width: 32px;
-  height: 32px;
-}
-
-.quote-date {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  font-style: italic;
-}
-
-.quote-content {
-  margin-bottom: 1.5rem;
-}
-
-.quote-text {
-  font-size: 1.5rem;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  font-style: italic;
   position: relative;
+  overflow: hidden;
 }
 
-.quote-author {
-  font-size: 1.1rem;
-  text-align: right;
-  color: #64ffda;
-}
-
-.quote-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.quote-tag {
-  background: rgba(100, 255, 218, 0.1);
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-  transition: all 0.3s;
-}
-
-.quote-tag:hover {
-  background: rgba(100, 255, 218, 0.2);
-  transform: translateY(-2px);
-}
-
-.empty-quote {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.6);
-  font-style: italic;
-}
-
-/* Pulsanti */
-.quote-actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin: 2rem 0;
-}
-
-.generate-btn,
-.copy-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 30px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s;
-  color: white;
-}
-
-.generate-btn {
-  background: linear-gradient(135deg, #64ffda, #1de9b6);
-  color: #1a237e;
-  min-width: 180px;
-}
-
-.generate-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(100, 255, 218, 0.3);
-}
-
-.generate-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.generate-btn.loading {
-  position: relative;
-}
-
-.copy-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.copy-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-}
-
-.copy-btn.copied {
-  background: rgba(46, 204, 113, 0.3);
-  border-color: rgba(46, 204, 113, 0.5);
-}
-
-.btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Storia delle citazioni */
-.quote-history {
-  margin-top: 3rem;
-}
-
-.history-list {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-}
-
-.history-item {
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.history-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-3px);
-}
-
-.history-text {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-style: italic;
-}
-
-.history-author {
-  font-size: 0.8rem;
-  text-align: right;
-  color: #64ffda;
-}
-
-/* Loading animation */
-.loading-animation {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 0;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  border-top-color: #64ffda;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.error {
-  padding: 1rem;
-  background: rgba(231, 76, 60, 0.2);
-  border-left: 4px solid #e74c3c;
-  border-radius: 4px;
-  margin: 1rem 0;
-}
-
-.shake {
-  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-
-@keyframes shake {
-  10%,
-  90% {
-    transform: translate3d(-1px, 0, 0);
-  }
-  20%,
-  80% {
-    transform: translate3d(2px, 0, 0);
-  }
-  30%,
-  50%,
-  70% {
-    transform: translate3d(-3px, 0, 0);
-  }
-  40%,
-  60% {
-    transform: translate3d(3px, 0, 0);
-  }
-}
-
-.version-badge {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  color: rgba(255, 255, 255, 0.6);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-}
-
-/* Background circles animation */
+/* Background animation */
 .circles {
   position: absolute;
   top: 0;
@@ -830,7 +468,6 @@ h2 {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  z-index: -1;
 }
 
 .circles li {
@@ -839,7 +476,7 @@ h2 {
   list-style: none;
   width: 20px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
   animation: animate 25s linear infinite;
   bottom: -150px;
   border-radius: 50%;
@@ -850,7 +487,6 @@ h2 {
   width: 80px;
   height: 80px;
   animation-delay: 0s;
-  animation-duration: 20s;
 }
 
 .circles li:nth-child(2) {
@@ -927,6 +563,7 @@ h2 {
     opacity: 1;
     border-radius: 0;
   }
+
   100% {
     transform: translateY(-1000px) rotate(720deg);
     opacity: 0;
@@ -934,15 +571,460 @@ h2 {
   }
 }
 
-/* Responsive styles */
+/* Brand styling */
+.brand {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  margin-right: 10px;
+  background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.brand-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid white;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: white;
+  }
+}
+
+p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  opacity: 0.9;
+}
+
+/* Glass effect container */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+/* Quote page specific styles */
+.quote-page .main-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.back-link {
+  margin-bottom: 1.5rem;
+}
+
+.back-link a {
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.back-link a:hover {
+  opacity: 1;
+  transform: translateX(-5px);
+}
+
+.back-arrow {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+/* Category selector */
+.category-selector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.category-btn {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.category-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.category-btn.active {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+}
+
+/* Quote container */
+.quote-container {
+  margin-bottom: 2rem;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #fff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  padding: 1rem;
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #ffcdd2;
+  border-radius: 8px;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.error small {
+  display: block;
+  margin-top: 0.5rem;
+  opacity: 0.8;
+}
+
+.shake {
+  animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+.empty-quote {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+/* Quote card */
+.quote-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pulse {
+  animation: pulse 1s;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.quote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.quote-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1.5);
+  opacity: 0.8;
+}
+
+.quote-date {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.quote-content {
+  margin-bottom: 1.5rem;
+}
+
+.quote-text {
+  font-size: 1.3rem;
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.quote-author {
+  text-align: right;
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.quote-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quote-tag {
+  background: rgba(100, 255, 218, 0.2);
+  color: rgba(100, 255, 218, 0.9);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+/* Quote actions */
+.quote-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.generate-btn,
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.generate-btn {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
+}
+
+.generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+}
+
+.generate-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.copy-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.copy-btn.copied {
+  background: rgba(100, 255, 218, 0.3);
+  color: rgba(100, 255, 218, 1);
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Quote history */
+.quote-history {
+  margin-top: 1rem;
+}
+
+.quote-history h2 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.history-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px);
+}
+
+.history-text {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+.history-author {
+  text-align: right;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Version badge */
+.version-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .main-container {
-    width: 95%;
+  .profile-page {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .glass {
     padding: 1.5rem;
   }
 
+  .category-selector {
+    flex-direction: column;
+  }
+
+  .category-btn {
+    width: 100%;
+  }
+
   .quote-text {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
   .quote-actions {
@@ -953,26 +1035,29 @@ h2 {
   .copy-btn {
     width: 100%;
   }
+}
 
-  .history-list {
-    grid-template-columns: 1fr;
-  }
-
+@media (max-width: 480px) {
   h1 {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
   }
-}
 
-/* Accessibility focus styles */
-.a11y-focus:focus {
-  outline: 2px solid #64ffda;
-  outline-offset: 2px;
-}
+  .brand-text {
+    font-size: 1.2rem;
+  }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .api-page {
-    background: linear-gradient(135deg, #0d1117, #161b22);
+  .quote-card {
+    padding: 1.5rem;
+  }
+
+  .quote-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .quote-date {
+    align-self: flex-end;
   }
 }
 </style>

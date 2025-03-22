@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="profile-page">
     <!-- Background elements -->
     <ul class="circles">
       <li v-for="n in 10" :key="n"></li>
@@ -202,7 +202,6 @@
         You are logged in as <span class="glow">{{ loggedInUser }}</span>
       </p>
 
-      <!-- Nel componente HomePage.vue, sostituisci il router-link con un button -->
       <button @click="navigateToDashboard" class="cta-button">
         Go to Dashboard
       </button>
@@ -371,28 +370,28 @@ export default {
           }),
         });
 
+        console.log("Login response status:", res.status);
+
+        // Handle non-successful responses
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.message || "Login failed");
         }
 
-        const user = await res.json();
-        console.log("Login successful for user:", user.email);
+        // Parse successful response
+        const data = await res.json();
+        console.log("Login successful:", data);
 
-        // Store user data (conditionally if remember me is checked)
+        // Store user data based on remember me preference
         if (this.rememberMe) {
-          localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("user", JSON.stringify(data));
         } else {
-          sessionStorage.setItem("user", JSON.stringify(user));
+          sessionStorage.setItem("user", JSON.stringify(data));
         }
 
+        // Update UI
         this.isAuthenticated = true;
-        this.loggedInUser = user.email;
-
-        // Show success notification
-        this.showNotification("Login successful!", "success");
-
-        // Navigate to dashboard
+        this.loggedInUser = data.email;
         this.$router.push("/dashboard-page");
       } catch (err) {
         console.error("Login error:", err);
@@ -402,902 +401,185 @@ export default {
       }
     },
 
-    async loginWithGoogle() {
-      try {
-        this.isLoading = true;
-        this.loginError = "";
-        console.log("Attempting Google login...");
-
-        // Use the googleTokenLogin method
-        const tokenResponse = await googleTokenLogin();
-        console.log("Google token response:", tokenResponse);
-
-        // We have an access token, now fetch the user profile
-        if (tokenResponse && tokenResponse.access_token) {
-          console.log("Got access token, fetching user profile...");
-
-          // Fetch the user profile using the access token
-          const userInfoResponse = await fetch(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            {
-              headers: {
-                Authorization: `Bearer ${tokenResponse.access_token}`,
-              },
-            }
-          );
-
-          if (!userInfoResponse.ok) {
-            throw new Error("Failed to fetch user info from Google");
-          }
-
-          const userInfo = await userInfoResponse.json();
-          console.log("User info from Google:", userInfo);
-
-          // Extract the required fields
-          const userData = {
-            googleId: userInfo.sub,
-            email: userInfo.email,
-            name: userInfo.name,
-            picture: userInfo.picture,
-            isRegistration: false, // This is login, not registration
-          };
-
-          console.log("Extracted user data:", userData);
-
-          // Send to your backend
-          const res = await fetch(`${this.backendUrl}/api/google-auth`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userData),
-          });
-
-          // Check for errors
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || "Google login failed");
-          }
-
-          // Process successful response
-          const userDataFromBackend = await res.json();
-          console.log("Backend login successful:", userDataFromBackend);
-
-          // Store user data based on remember me setting
-          if (this.rememberMe) {
-            localStorage.setItem("user", JSON.stringify(userDataFromBackend));
-          } else {
-            sessionStorage.setItem("user", JSON.stringify(userDataFromBackend));
-          }
-
-          this.isAuthenticated = true;
-          this.loggedInUser = userDataFromBackend.email;
-          this.$router.push("/dashboard-page");
-        } else {
-          throw new Error("Did not receive access token from Google");
-        }
-      } catch (error) {
-        console.error("Google login error:", error);
-        this.loginError =
-          error.message || "Failed to sign in with Google. Please try again.";
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    async registerWithGoogle() {
-      try {
-        this.isLoading = true;
-        this.registerError = "";
-        console.log("Attempting Google registration...");
-
-        // Use the googleTokenLogin method
-        const tokenResponse = await googleTokenLogin();
-        console.log("Google token response:", tokenResponse);
-
-        // We have an access token, now fetch the user profile
-        if (tokenResponse && tokenResponse.access_token) {
-          console.log("Got access token, fetching user profile...");
-
-          // Fetch the user profile using the access token
-          const userInfoResponse = await fetch(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            {
-              headers: {
-                Authorization: `Bearer ${tokenResponse.access_token}`,
-              },
-            }
-          );
-
-          if (!userInfoResponse.ok) {
-            throw new Error("Failed to fetch user info from Google");
-          }
-
-          const userInfo = await userInfoResponse.json();
-          console.log("User info from Google:", userInfo);
-
-          // Extract the required fields
-          const userData = {
-            googleId: userInfo.sub,
-            email: userInfo.email,
-            name: userInfo.name,
-            picture: userInfo.picture,
-            isRegistration: true,
-          };
-
-          console.log("Extracted user data:", userData);
-
-          // Make sure we have all required fields
-          if (!userData.googleId || !userData.email || !userData.name) {
-            throw new Error("Missing required user information");
-          }
-
-          // Send to your backend
-          const res = await fetch(`${this.backendUrl}/api/google-auth`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userData),
-          });
-
-          // Check for errors
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || "Google registration failed");
-          }
-
-          // Process successful response
-          const userDataFromBackend = await res.json();
-          console.log("Backend registration successful:", userDataFromBackend);
-
-          // Store user data
-          localStorage.setItem("user", JSON.stringify(userDataFromBackend));
-          this.isAuthenticated = true;
-          this.loggedInUser = userDataFromBackend.email;
-          this.$router.push("/dashboard-page");
-        } else {
-          throw new Error("Did not receive access token from Google");
-        }
-      } catch (error) {
-        console.error("Google registration error:", error);
-        this.registerError =
-          error.message || "Failed to sign up with Google. Please try again.";
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    logout() {
+    // Login with Google method
+    loginWithGoogle() {
+      this.loginError = "";
       this.isLoading = true;
 
-      try {
-        // Cancella i dati dell'utente
-        localStorage.removeItem("user");
-        sessionStorage.removeItem("user");
+      googleTokenLogin()
+        .then((response) => {
+          console.log("Google login successful");
 
-        this.isAuthenticated = false;
-        this.loggedInUser = null;
+          // Get user info from Google API
+          return fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: {
+              Authorization: `Bearer ${response.access_token}`,
+            },
+          });
+        })
+        .then((res) => res.json())
+        .then((googleUser) => {
+          console.log("Google user info:", googleUser);
 
-        // Redirect alla home page
+          // Prepare data to send to backend
+          const userData = {
+            email: googleUser.email,
+            name: googleUser.name,
+            googleId: googleUser.sub,
+            picture: googleUser.picture,
+            isRegistration: false, // This indicates it's a login attempt
+          };
+
+          console.log("Sending user data to backend:", userData);
+
+          // Send to backend
+          return fetch(`${this.backendUrl}/api/google-auth`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          });
+        })
+        .then((res) => {
+          if (!res.ok) {
+            return res.json().then((err) => {
+              throw new Error(err.message || "Google login failed");
+            });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          // Store user data
+          localStorage.setItem("user", JSON.stringify(data));
+
+          // Update state
+          this.isAuthenticated = true;
+          this.loggedInUser = data.email;
+
+          // IMPORTANT: Navigate to the correct path - dashboard-page, not dashboard
+          window.location.href = "/dashboard-page";
+        })
+        .catch((error) => {
+          console.error("Google login error:", error);
+          this.loginError = error.message || "Failed to login with Google";
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
+    },
+
+    // Register with Google method
+    registerWithGoogle() {
+      this.registerError = "";
+      this.isLoading = true;
+
+      googleTokenLogin()
+        .then((response) => {
+          console.log("Google signup successful");
+
+          // Get user info from Google API
+          return fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: {
+              Authorization: `Bearer ${response.access_token}`,
+            },
+          });
+        })
+        .then((res) => res.json())
+        .then((googleUser) => {
+          console.log("Google user info:", googleUser);
+
+          // Check terms agreement
+          if (!this.agreeToTerms) {
+            throw new Error(
+              "You must agree to the Terms of Service and Privacy Policy"
+            );
+          }
+
+          // Prepare data to send to backend
+          const userData = {
+            email: googleUser.email,
+            name: googleUser.name,
+            googleId: googleUser.sub,
+            picture: googleUser.picture,
+            isRegistration: true, // This indicates it's a registration
+          };
+
+          console.log("Sending user data to backend:", userData);
+
+          // Send to backend
+          return fetch(`${this.backendUrl}/api/google-auth`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          });
+        })
+        .then((res) => {
+          if (!res.ok) {
+            return res.json().then((err) => {
+              throw new Error(err.message || "Google signup failed");
+            });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          // Store user data
+          localStorage.setItem("user", JSON.stringify(data));
+
+          // Update state
+          this.isAuthenticated = true;
+          this.loggedInUser = data.email;
+
+          // IMPORTANT: Navigate to the correct path - dashboard-page, not dashboard
+          window.location.href = "/dashboard-page";
+        })
+        .catch((error) => {
+          console.error("Google signup error:", error);
+          this.registerError = error.message || "Failed to sign up with Google";
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
+    },
+    logout() {
+      // Clear stored user data
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("user");
+
+      // Update UI
+      this.isAuthenticated = false;
+      this.loggedInUser = null;
+
+      // Redirect to home
+      if (this.$route.path !== "/") {
         this.$router.push("/");
-
-        this.showNotification("Logout successful", "info");
-      } catch (err) {
-        console.error("Logout error:", err);
-      } finally {
-        this.isLoading = false;
       }
     },
+
     navigateToDashboard() {
-      console.log("Tentativo di navigazione alla dashboard");
-      this.$router.push({ name: "DashboardPage" }).catch((err) => {
-        console.error("Errore di navigazione:", err);
-      });
+      this.$router.push("/dashboard-page");
     },
-  },
 
-  showNotification(message, type = "info") {
-    // Implementazione semplice di notifiche
-    console.log(`Notification (${type}): ${message}`);
-
-    // Mostra un toast o un alert
-    // Questa è una implementazione base, potresti voler usare una libreria come vue-toastification
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    // Rimuovi il toast dopo 3 secondi
-    setTimeout(() => {
-      toast.classList.add("toast-hide");
-      setTimeout(() => {
-        document.body.removeChild(toast);
-      }, 300);
-    }, 3000);
-  },
-
-  createConfetti() {
-    // Implementazione semplice dell'animazione confetti
-    console.log("Showing confetti animation!");
-
-    // Qui potresti implementare un'animazione confetti
-    // Ad esempio, usando una libreria come canvas-confetti
-
-    // Per questa implementazione semplice, creiamo alcuni elementi DOM
-    const container = document.createElement("div");
-    container.style.position = "fixed";
-    container.style.top = "0";
-    container.style.left = "0";
-    container.style.width = "100%";
-    container.style.height = "100%";
-    container.style.pointerEvents = "none";
-    container.style.zIndex = "9999";
-    document.body.appendChild(container);
-
-    // Crea 50 confetti colorati
-    const colors = [
-      "#f44336",
-      "#e91e63",
-      "#9c27b0",
-      "#673ab7",
-      "#3f51b5",
-      "#2196f3",
-      "#03a9f4",
-      "#00bcd4",
-      "#009688",
-      "#4CAF50",
-    ];
-
-    for (let i = 0; i < 50; i++) {
-      const confetti = document.createElement("div");
-      confetti.style.position = "absolute";
-      confetti.style.width = `${Math.random() * 10 + 5}px`;
-      confetti.style.height = `${Math.random() * 10 + 5}px`;
-      confetti.style.backgroundColor =
-        colors[Math.floor(Math.random() * colors.length)];
-      confetti.style.left = `${Math.random() * 100}%`;
-      confetti.style.top = "-20px";
-      confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
-      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-
-      container.appendChild(confetti);
-
-      // Animazione di caduta
-      const duration = Math.random() * 3 + 2;
-      confetti.style.animation = `fall ${duration}s linear forwards`;
-    }
-
-    // Rimuovi il container dopo 5 secondi
-    setTimeout(() => {
-      document.body.removeChild(container);
-    }, 5000);
+    createConfetti() {
+      // Simple confetti effect - in a real app, you might use a library
+      console.log("Success! 🎉");
+    },
   },
 };
 </script>
 
 <style scoped>
-/* Aggiungi qui i tuoi stili CSS esistenti */
-
-/* Stile per il pulsante Google */
-.google-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: #ffffff;
-  color: #444;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px 15px;
-}
-
-.google-btn:hover {
-  background-color: #f5f5f5;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.google-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
-/* Stile per i toast di notifica */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 12px 20px;
-  border-radius: 4px;
-  color: white;
-  max-width: 300px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
-  z-index: 9999;
-  animation: slideIn 0.3s ease forwards;
-}
-
-.toast-success {
-  background-color: #4caf50;
-}
-
-.toast-info {
-  background-color: #2196f3;
-}
-
-.toast-warning {
-  background-color: #ff9800;
-}
-
-.toast-error {
-  background-color: #f44336;
-}
-
-.toast-hide {
-  animation: slideOut 0.3s ease forwards;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOut {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-@keyframes fall {
-  to {
-    transform: translateY(100vh) rotate(720deg);
-    opacity: 0;
-  }
-}
-</style>
-<style scoped>
-/* Paste the entire CSS here */
-body,
-html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
-}
-#app {
-  min-height: 100vh;
-  width: 100%;
-}
-.home {
-  text-align: center;
-  min-height: 100vh;
-  width: 100%;
-  background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+.profile-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  color: white;
-  animation: gradientFlow 15s ease infinite;
-  background-size: 400% 400%;
-  padding: 3rem 1.5rem;
-  position: relative;
-  overflow-x: hidden;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-@keyframes gradientFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-h1 {
-  font-size: 3.5rem;
-  margin-bottom: 1rem;
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  animation: fadeInDown 1s ease;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-h2 {
-  font-size: 2rem;
-  margin: 1.5rem 0;
-  color: #ffffff;
-  position: relative;
-  display: inline-block;
-}
-
-h2:after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50px;
-  height: 3px;
-  background-color: #ffe259;
-  animation: expandWidth 0.8s ease forwards;
-}
-
-@keyframes expandWidth {
-  from {
-    width: 0;
-  }
-  to {
-    width: 50px;
-  }
-}
-
-p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 600px;
-  animation: fadeIn 1s ease 0.3s both;
-}
-
-.error {
-  color: #ff6b6b;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-  font-weight: 500;
-  animation: shake 0.5s ease;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  20%,
-  60% {
-    transform: translateX(-5px);
-  }
-  40%,
-  80% {
-    transform: translateX(5px);
-  }
-}
-
-form {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  min-height: 100vh;
   padding: 2rem;
-  margin-bottom: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 450px;
-  animation: slideUp 0.8s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-form:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    transform: translateY(-30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-form div {
-  margin-bottom: 1.5rem;
-  text-align: left;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 0.5px;
-}
-
-form input {
-  width: 100%;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-form input:focus {
-  outline: none;
-  border-color: #ffe259;
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 3px rgba(255, 226, 89, 0.3);
-}
-
-form input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-button {
-  padding: 1rem 2rem;
-  background: linear-gradient(45deg, #ffe259, #ffa751);
-  color: #333;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 226, 89, 0.4);
-  width: 100%;
-  margin-top: 1rem;
   position: relative;
   overflow: hidden;
-  z-index: 1;
 }
 
-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 7px 20px rgba(255, 226, 89, 0.5);
-  color: #111;
-}
-
-button:before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, #ffa751, #ffe259);
-  transition: left 0.5s ease;
-  z-index: -1;
-}
-
-button:hover:before {
-  left: 0;
-}
-
-a {
-  color: #ffe259;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: inline-block;
-  margin: 1rem 0;
-  padding: 0.5rem 1.5rem;
-  border: 2px solid #ffe259;
-  border-radius: 50px;
-}
-
-a:hover {
-  background-color: #ffe259;
-  color: #185a9d;
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(255, 226, 89, 0.4);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2.5rem;
-  }
-
-  form {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 2rem;
-  }
-
-  p {
-    font-size: 1rem;
-  }
-
-  form {
-    padding: 1.2rem;
-  }
-
-  button {
-    padding: 0.8rem 1.5rem;
-  }
-}
-
-/* Additional animations for logged in state */
-div[v-else] {
-  animation: fadeIn 0.8s ease;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 450px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-div[v-else] p {
-  font-size: 1.2rem;
-  color: white;
-  margin-bottom: 1.5rem;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.8;
-  }
-}
-
-div[v-else] button {
-  background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
-  margin-top: 1rem;
-}
-
-div[v-else] button:before {
-  background: linear-gradient(45deg, #ff8e8e, #ff6b6b);
-}
-
-/* Additional styling for the entire app */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* Loading animation for form submissions */
-button[type="submit"] {
-  position: relative;
-}
-
-button[type="submit"].loading:after {
-  content: "";
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  top: calc(50% - 10px);
-  right: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Form focus effects */
-form div {
-  position: relative;
-}
-
-form div:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(45deg, #ffe259, #ffa751);
-  transition: width 0.3s ease;
-}
-
-form div:focus-within:after {
-  width: 100%;
-}
-
-/* Logo placeholder */
-.logo {
-  margin-bottom: 2rem;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-/* Welcome text animation */
-.welcome-text {
-  overflow: hidden;
-  white-space: nowrap;
-  animation: typing 3.5s steps(40, end);
-}
-
-@keyframes typing {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-/* Input field icons */
-.input-icon {
-  position: relative;
-}
-
-.input-icon input {
-  padding-left: 40px;
-}
-
-.input-icon:before {
-  content: "";
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  opacity: 0.7;
-  z-index: 1;
-}
-
-.input-icon.email:before {
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E")
-    no-repeat center center;
-}
-
-.input-icon.password:before {
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z'/%3E%3C/svg%3E")
-    no-repeat center center;
-}
-
-.input-icon.name:before {
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")
-    no-repeat center center;
-}
-
-/* Toggle password visibility */
-.password-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-}
-
-.password-toggle:hover {
-  opacity: 1;
-}
-
-/* Success message animation */
-.success-message {
-  padding: 1rem;
-  background: rgba(46, 213, 115, 0.2);
-  color: #2ed573;
-  border-radius: 8px;
-  margin-top: 1rem;
-  animation: fadeInUp 0.5s ease;
-}
-
-@keyframes fadeInUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Form transition effects */
-.form-enter-active,
-.form-leave-active {
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.form-enter-from,
-.form-leave-to {
-  opacity: 0;
-  transform: translateY(30px);
-}
-
+/* Background animation */
 .circles {
   position: absolute;
   top: 0;
@@ -1305,7 +587,6 @@ form div:focus-within:after {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  z-index: -1;
   margin: 0;
   padding: 0;
 }
@@ -1403,6 +684,7 @@ form div:focus-within:after {
     opacity: 1;
     border-radius: 0;
   }
+
   100% {
     transform: translateY(-1000px) rotate(720deg);
     opacity: 0;
@@ -1410,17 +692,206 @@ form div:focus-within:after {
   }
 }
 
-/* Toggle switch for light/dark mode */
-.toggle-switch {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
+/* Brand styling */
+.brand {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.toggle-switch input {
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  margin-right: 10px;
+  background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.brand-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid white;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: white;
+  }
+}
+
+p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  opacity: 0.9;
+}
+
+/* Glass effect container */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+/* Auth container styling */
+.auth-container {
+  width: 100%;
+  max-width: 450px;
+}
+
+.form-switch {
+  display: flex;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  padding: 0.3rem;
+}
+
+.form-switch button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.8rem;
+  color: white;
+  font-size: 1rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.form-switch button.active {
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+.float-label {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.float-label input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 2.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.float-label input:focus {
+  outline: none;
+  border-color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.float-label label {
+  position: absolute;
+  left: 2.5rem;
+  top: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s;
+  pointer-events: none;
+}
+
+.float-label input:focus ~ label,
+.float-label input:not(:placeholder-shown) ~ label {
+  top: -0.5rem;
+  left: 1rem;
+  font-size: 0.8rem;
+  background-color: rgba(118, 75, 162, 0.8);
+  padding: 0 0.5rem;
+  border-radius: 4px;
+}
+
+.input-icon::before {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  width: 1rem;
+  height: 1rem;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+}
+
+.input-icon.name::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
+}
+
+.input-icon.email::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+}
+
+.input-icon.password::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E");
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.password-toggle:hover {
+  opacity: 1;
+}
+
+.remember-toggle {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+  margin-right: 10px;
+}
+
+.toggle input {
   opacity: 0;
   width: 0;
   height: 0;
@@ -1433,7 +904,7 @@ form div:focus-within:after {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
   transition: 0.4s;
   border-radius: 34px;
 }
@@ -1441,8 +912,8 @@ form div:focus-within:after {
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 26px;
-  width: 26px;
+  height: 16px;
+  width: 16px;
   left: 4px;
   bottom: 4px;
   background-color: white;
@@ -1451,239 +922,201 @@ form div:focus-within:after {
 }
 
 input:checked + .toggle-slider {
-  background-color: #ffe259;
-}
-
-input:focus + .toggle-slider {
-  box-shadow: 0 0 1px #ffe259;
+  background-color: #43e97b;
 }
 
 input:checked + .toggle-slider:before {
   transform: translateX(26px);
 }
 
-/* Brand logo animation */
-.brand {
-  display: flex;
-  align-items: center;
-  margin-bottom: 2rem;
+.remember-text {
+  font-size: 0.9rem;
 }
 
-.brand-icon {
-  width: 40px;
-  height: 40px;
-  margin-right: 10px;
-  background: linear-gradient(45deg, #ffe259, #ffa751);
-  border-radius: 10px;
+.forgot-password {
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+
+.forgot-password a {
+  color: white;
+  opacity: 0.8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: opacity 0.3s;
+}
+
+.forgot-password a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
   position: relative;
   overflow: hidden;
-  animation: pulse-grow 2s infinite alternate;
+  width: 100%;
 }
 
-@keyframes pulse-grow {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1.1);
-  }
+button[type="submit"] {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
 }
 
-.brand-icon:before,
-.brand-icon:after {
+button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+}
+
+.loading::after {
   content: "";
   position: absolute;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.brand-icon:before {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
+  top: calc(50% - 10px);
+  right: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #fff;
   border-radius: 50%;
-  top: 8px;
-  left: 12px;
+  animation: spin 1s linear infinite;
 }
 
-.brand-icon:after {
-  width: 24px;
-  height: 4px;
-  border-radius: 2px;
-  bottom: 10px;
-  left: 8px;
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.brand-text {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: white;
-  letter-spacing: 1px;
-}
-
-.form-switch {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50px;
-  padding: 5px;
-  width: 100%;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.form-switch button {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  font-weight: 500;
-  padding: 0.8rem 1.5rem;
-  border-radius: 50px;
-  transition: all 0.3s ease;
-  width: 50%;
-}
-
-.form-switch button.active {
-  color: #333;
-  background: linear-gradient(45deg, #ffe259, #ffa751);
-  box-shadow: 0 4px 15px rgba(255, 226, 89, 0.4);
-}
-
-/* Floating labels */
-.float-label {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.float-label input {
-  width: 100%;
-  padding: 18px 15px 10px;
+.error,
+.success {
+  padding: 0.8rem;
   border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  text-align: center;
+  margin-top: 1rem;
 }
 
-.float-label label {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1rem;
-  pointer-events: none;
-  transition: all 0.3s ease;
+.error {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #ffcdd2;
 }
 
-.float-label input:focus ~ label,
-.float-label input:not(:placeholder-shown) ~ label {
-  top: 5px;
-  left: 15px;
-  font-size: 0.75rem;
-  color: #ffe259;
+.success {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #c8e6c9;
 }
 
-.float-label input:focus {
-  border-color: #ffe259;
-  box-shadow: 0 0 0 3px rgba(255, 226, 89, 0.3);
+.shake {
+  animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* Password strength indicator */
-.password-strength {
-  height: 5px;
-  border-radius: 3px;
-  margin-top: 0.5rem;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }
 
-.password-strength-bar {
-  height: 100%;
-  width: 0%;
-  transition: all 0.3s ease;
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
 }
 
-.strength-weak .password-strength-bar {
-  width: 33%;
-  background-color: #ff6b6b;
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.strength-medium .password-strength-bar {
-  width: 66%;
-  background-color: #feca57;
+.divider::before {
+  margin-right: 0.5rem;
 }
 
-.strength-strong .password-strength-bar {
-  width: 100%;
-  background-color: #1dd1a1;
+.divider::after {
+  margin-left: 0.5rem;
 }
 
-/* Social login buttons */
 .social-login {
-  margin-top: 1.5rem;
   display: flex;
   justify-content: center;
   gap: 1rem;
 }
 
 .social-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .social-btn:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.social-btn.google-btn {
+  background-color: #fff;
+  color: #1a1a1a;
+  border-radius: 30px;
+  width: auto;
+  padding: 0.5rem 1.5rem;
+  gap: 0.5rem;
+}
+
+.social-btn.google-btn:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .social-btn svg {
-  width: 24px;
-  height: 24px;
-  fill: white;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
 }
 
-/* Forgot password link */
-.forgot-password {
-  text-align: right;
-  margin-top: -1rem;
-  margin-bottom: 1rem;
+.google-btn span {
+  font-weight: 500;
 }
 
-.forgot-password a {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  border: none;
-  padding: 0;
-  transition: all 0.3s ease;
-}
-
-.forgot-password a:hover {
-  color: #ffe259;
-  background: none;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Custom checkbox styling */
 .custom-checkbox {
-  display: block;
+  display: flex;
+  align-items: center;
   position: relative;
-  padding-left: 30px;
+  padding-left: 35px;
+  margin-bottom: 1.5rem;
   cursor: pointer;
   font-size: 0.9rem;
   user-select: none;
-  color: rgba(255, 255, 255, 0.8);
 }
 
 .custom-checkbox input {
@@ -1701,9 +1134,8 @@ input:checked + .toggle-slider:before {
   height: 20px;
   width: 20px;
   background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
+  border-radius: 4px;
 }
 
 .custom-checkbox:hover input ~ .checkmark {
@@ -1711,8 +1143,8 @@ input:checked + .toggle-slider:before {
 }
 
 .custom-checkbox input:checked ~ .checkmark {
-  background-color: #ffe259;
-  border-color: #ffe259;
+  background-color: #43e97b;
+  border-color: #43e97b;
 }
 
 .checkmark:after {
@@ -1726,8 +1158,8 @@ input:checked + .toggle-slider:before {
 }
 
 .custom-checkbox .checkmark:after {
-  left: 7px;
-  top: 3px;
+  left: 6px;
+  top: 2px;
   width: 5px;
   height: 10px;
   border: solid white;
@@ -1735,37 +1167,52 @@ input:checked + .toggle-slider:before {
   transform: rotate(45deg);
 }
 
-/* Terms checkbox */
-.terms-checkbox {
-  margin-bottom: 1.5rem;
-  line-height: 1.4;
+.custom-checkbox a {
+  color: white;
+  text-decoration: none;
 }
 
-.terms-checkbox a {
-  display: inline;
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-
-.terms-checkbox a:hover {
-  background: none;
-  transform: none;
-  box-shadow: none;
+.custom-checkbox a:hover {
   text-decoration: underline;
+}
+
+.password-strength {
+  height: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin: -1rem 0 1.5rem;
+  overflow: hidden;
+}
+
+.password-strength-bar {
+  height: 100%;
+  width: 0;
+  transition: all 0.3s ease;
+}
+
+.strength-weak .password-strength-bar {
+  width: 30%;
+  background-color: #ff5252;
+}
+
+.strength-medium .password-strength-bar {
+  width: 70%;
+  background-color: #ffb74d;
+}
+
+.strength-strong .password-strength-bar {
+  width: 100%;
+  background-color: #66bb6a;
 }
 
 /* Success checkmark animation */
 .success-checkmark {
   width: 80px;
   height: 80px;
-  margin: 0 auto;
-  position: relative;
-  animation: scale 0.5s ease-in-out;
-  margin-bottom: 1rem;
+  margin: 0 auto 2rem;
 }
 
-.success-checkmark .check-icon {
+.check-icon {
   width: 80px;
   height: 80px;
   position: relative;
@@ -1774,7 +1221,7 @@ input:checked + .toggle-slider:before {
   border: 4px solid #4caf50;
 }
 
-.success-checkmark .check-icon::before {
+.check-icon::before {
   top: 3px;
   left: -2px;
   width: 30px;
@@ -1782,7 +1229,7 @@ input:checked + .toggle-slider:before {
   border-radius: 100px 0 0 100px;
 }
 
-.success-checkmark .check-icon::after {
+.check-icon::after {
   top: 0;
   left: 30px;
   width: 60px;
@@ -1791,8 +1238,8 @@ input:checked + .toggle-slider:before {
   animation: rotate-circle 4.25s ease-in;
 }
 
-.success-checkmark .check-icon::before,
-.success-checkmark .check-icon::after {
+.check-icon::before,
+.check-icon::after {
   content: "";
   height: 100px;
   position: absolute;
@@ -1800,7 +1247,7 @@ input:checked + .toggle-slider:before {
   transform: rotate(-45deg);
 }
 
-.success-checkmark .check-icon .icon-line {
+.check-icon .icon-line {
   height: 5px;
   background-color: #4caf50;
   display: block;
@@ -1809,7 +1256,7 @@ input:checked + .toggle-slider:before {
   z-index: 10;
 }
 
-.success-checkmark .check-icon .icon-line.line-tip {
+.check-icon .icon-line.line-tip {
   top: 46px;
   left: 14px;
   width: 25px;
@@ -1817,7 +1264,7 @@ input:checked + .toggle-slider:before {
   animation: icon-line-tip 0.75s;
 }
 
-.success-checkmark .check-icon .icon-line.line-long {
+.check-icon .icon-line.line-long {
   top: 38px;
   right: 8px;
   width: 47px;
@@ -1876,72 +1323,52 @@ input:checked + .toggle-slider:before {
   }
 }
 
-@keyframes scale {
-  0% {
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
+/* Glow effect */
+.glow {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  font-weight: 600;
 }
 
 /* CTA button */
 .cta-button {
-  padding: 1.2rem 2.5rem;
-  background: linear-gradient(45deg, #ffe259, #ffa751);
-  color: #333;
-  border: none;
-  border-radius: 50px;
-  font-weight: 700;
-  font-size: 1.1rem;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 20px rgba(255, 226, 89, 0.4);
-  margin: 2rem auto;
-  display: block;
-  text-align: center;
-  max-width: 250px;
-  text-decoration: none;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
+  margin-bottom: 1rem;
 }
 
 .cta-button:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 25px rgba(255, 226, 89, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
 }
 
-.cta-button:after {
-  content: "";
+/* Language selector */
+.language-selector {
   position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background: linear-gradient(
-    45deg,
-    transparent 0%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.2) 100%
-  );
-  background-size: 250% 250%;
-  animation: shimmer 3s infinite;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 100% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
+.language-selector select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  appearance: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 30px;
+}
+
+.language-selector select:focus {
+  outline: none;
+  border-color: white;
 }
 
 /* Version badge */
@@ -1949,303 +1376,59 @@ input:checked + .toggle-slider:before {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  padding: 3px 6px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-}
-
-/* Confetti animation */
-.confetti-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9999;
-}
-
-.confetti {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: #ffe259;
-  animation: confetti-fall 3s linear forwards;
-}
-
-@keyframes confetti-fall {
-  0% {
-    transform: translateY(-100%) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(100vh) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-/* Language selector */
-.language-selector {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-}
-
-.language-selector select {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  color: white;
-  padding: 5px 25px 5px 10px;
-  font-size: 0.8rem;
-  appearance: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.language-selector select:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.language-selector:after {
-  content: "▼";
-  font-size: 0.7rem;
-  color: white;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-/* Notification */
-.notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 15px 20px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 4.5s forwards;
-  z-index: 1000;
-}
-
-.notification.success {
-  background: linear-gradient(45deg, #2ecc71, #1abc9c);
-}
-
-.notification.error {
-  background: linear-gradient(45deg, #e74c3c, #c0392b);
-}
-
-.notification.info {
-  background: linear-gradient(45deg, #3498db, #2980b9);
-}
-
-.notification:before {
-  content: "";
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-/* Auth container to hold login/register forms */
-.auth-container {
-  width: 100%;
-  max-width: 500px;
-  animation: fadeIn 0.8s ease;
-}
-
-/* Glow effect for important elements */
-.glow {
-  text-shadow: 0 0 10px rgba(255, 226, 89, 0.7);
-}
-
-/* Remember me toggle */
-.remember-toggle {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.toggle {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-  margin-right: 10px;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.2);
-  transition: 0.4s;
-  border-radius: 34px;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-  background-color: #ffe259;
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(20px);
-}
-
-.remember-text {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
-}
-
-/* Divider with text */
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 1.5rem 0;
+  background-color: rgba(0, 0, 0, 0.3);
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
 }
 
-.divider:before,
-.divider:after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.divider:before {
-  margin-right: 10px;
-}
-
-.divider:after {
-  margin-left: 10px;
-}
-
-/* Typewriter effect */
-.typewriter {
-  overflow: hidden;
-  border-right: 0.15em solid #ffe259;
-  white-space: nowrap;
-  margin: 0 auto;
-  letter-spacing: 0.15em;
-  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
-}
-
-@keyframes typing {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-@keyframes blink-caret {
-  from,
-  to {
-    border-color: transparent;
-  }
-  50% {
-    border-color: #ffe259;
-  }
-}
-
-/* Accessibility focus */
+/* A11y focus styles */
 .a11y-focus:focus {
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.6);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 226, 89, 0.6);
-  border-radius: 4px;
 }
 
-/* Mobile optimizations */
-@media (max-width: 320px) {
-  h1 {
-    font-size: 1.8rem;
-  }
-
-  form input {
-    padding: 0.8rem;
-  }
-
-  .brand {
-    margin-bottom: 1.5rem;
-  }
-}
-
-/* Tablet optimizations */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .home {
-    padding: 4rem 2rem;
-  }
-
-  form {
-    max-width: 500px;
-  }
-}
-
-/* Responsive adjustments for ultra-wide screens */
-@media (min-width: 1600px) {
-  .home {
-    padding: 5rem;
-  }
-
-  form {
-    max-width: 550px;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 1rem;
   }
 
   h1 {
-    font-size: 4rem;
+    font-size: 2rem;
+  }
+
+  .glass {
+    padding: 1.5rem;
+  }
+
+  .social-login {
+    flex-wrap: wrap;
+  }
+
+  .social-btn.google-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .language-selector {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .brand-text {
+    font-size: 1.2rem;
+  }
+
+  .form-switch button {
+    padding: 0.6rem;
   }
 }
 </style>
