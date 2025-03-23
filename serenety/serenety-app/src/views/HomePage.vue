@@ -469,228 +469,238 @@ export default {
       }
     },
 
-    // Replace your current loginWithGoogle method with this:
-    loginWithGoogle() {
-      this.loginError = "";
-      this.isLoading = true;
+    // Corrected loginWithGoogle method
+loginWithGoogle() {
+  this.loginError = "";
+  this.isLoading = true;
 
-      // Create a Google OAuth popup
-      const width = 500;
-      const height = 600;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
+  // Create a Google OAuth popup
+  const width = 500;
+  const height = 600;
+  const left = window.screen.width / 2 - width / 2;
+  const top = window.screen.height / 2 - height / 2;
 
-      const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
-      const clientId =
-        "918102923184-5tg9cgba9m9m64moj6njkodndu148iel.apps.googleusercontent.com"; // Your client ID
+  const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+  const clientId =
+    "918102923184-5tg9cgba9m9m64moj6njkodndu148iel.apps.googleusercontent.com"; // Your client ID
 
-      const params = new URLSearchParams({
-        client_id: clientId,
-        redirect_uri: "http://localhost:5001",
-        response_type: "token",
-        scope: "email profile openid",
-        prompt: "select_account",
-      });
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: "http://localhost:5001",
+    response_type: "token",
+    scope: "email profile openid",
+    prompt: "select_account",
+  });
 
-      const popup = window.open(
-        `${googleAuthUrl}?${params.toString()}`,
-        "Google Login",
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
+  const popup = window.open(
+    `${googleAuthUrl}?${params.toString()}`,
+    "Google Login",
+    `width=${width},height=${height},left=${left},top=${top}`
+  );
 
-      // Poll the popup to check when it's redirected
-      const pollTimer = window.setInterval(() => {
-        try {
-          // Check if we can access the popup location
-          if (popup.closed) {
-            window.clearInterval(pollTimer);
-            this.isLoading = false;
-            return;
-          }
-
-          const url = popup.location.href;
-
-          if (url.includes("access_token")) {
-            window.clearInterval(pollTimer);
-            popup.close();
-
-            // Extract the access token
-            const hashParams = new URLSearchParams(url.split("#")[1]);
-            const accessToken = hashParams.get("access_token");
-
-            // Get user info from Google API
-            fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            })
-              .then((res) => res.json())
-              .then((googleUser) => {
-                console.log("Google user info:", googleUser);
-
-                // Prepare data to send to backend
-                const userData = {
-                  email: googleUser.email,
-                  name: googleUser.name,
-                  googleId: googleUser.sub,
-                  picture: googleUser.picture,
-                  isRegistration: false, // This indicates it's a login attempt
-                };
-
-                // Send to backend
-                return fetch(`${this.backendUrl}/api/google-auth-simple`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(userData),
-                });
-              })
-              .then((res) => {
-                if (!res.ok) {
-                  return res.json().then((err) => {
-                    throw new Error(err.message || "Google login failed");
-                  });
-                }
-                return res.json();
-              })
-              .then((data) => {
-                // Store user data
-                localStorage.setItem("user", JSON.stringify(data));
-
-                // Update state
-                this.isAuthenticated = true;
-                this.loggedInUser = data.email;
-
-                // Navigate to dashboard
-                window.location.href = "/dashboard-page";
-              })
-              .catch((error) => {
-                console.error("Google login error:", error);
-                this.loginError =
-                  error.message || "Failed to login with Google";
-                this.isLoading = false;
-              });
-          }
-        } catch (e) {
-          // Likely a cross-origin error when trying to access popup.location
-          // This is normal and we just continue polling
-        }
-      }, 500);
-    },
-
-    // Similarly update your registerWithGoogle method:
-    registerWithGoogle() {
-      // Check terms agreement first
-      if (!this.agreeToTerms) {
-        this.registerError =
-          "You must agree to the Terms of Service and Privacy Policy";
+  // Poll the popup to check when it's redirected
+  const pollTimer = window.setInterval(() => {
+    try {
+      // Check if we can access the popup location
+      if (popup.closed) {
+        window.clearInterval(pollTimer);
+        this.isLoading = false;
         return;
       }
 
-      this.registerError = "";
-      this.isLoading = true;
+      const url = popup.location.href;
 
-      // Create a Google OAuth popup
-      const width = 500;
-      const height = 600;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
+      if (url.includes("access_token")) {
+        window.clearInterval(pollTimer);
+        popup.close();
 
-      const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
-      const clientId =
-        "918102923184-5tg9cgba9m9m64moj6njkodndu148iel.apps.googleusercontent.com"; // Your client ID
+        // Extract the access token
+        const hashParams = new URLSearchParams(url.split("#")[1]);
+        const accessToken = hashParams.get("access_token");
 
-      const params = new URLSearchParams({
-        client_id: clientId,
-        redirect_uri: "http://localhost:5001",
-        response_type: "token",
-        scope: "email profile openid",
-        prompt: "select_account",
-      });
+        // Get user info from Google API
+        fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+          .then((res) => res.json())
+          .then((googleUser) => {
+            console.log("Google user info:", googleUser);
 
-      const popup = window.open(
-        `${googleAuthUrl}?${params.toString()}`,
-        "Google Signup",
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
+            // Prepare data to send to backend
+            const userData = {
+              email: googleUser.email,
+              name: googleUser.name,
+              googleId: googleUser.sub,
+              picture: googleUser.picture,
+              isRegistration: false, // This indicates it's a login attempt
+            };
 
-      // Poll the popup to check when it's redirected
-      const pollTimer = window.setInterval(() => {
-        try {
-          // Check if we can access the popup location
-          if (popup.closed) {
-            window.clearInterval(pollTimer);
-            this.isLoading = false;
-            return;
-          }
-
-          const url = popup.location.href;
-
-          if (url.includes("access_token")) {
-            window.clearInterval(pollTimer);
-            popup.close();
-
-            // Extract the access token
-            const hashParams = new URLSearchParams(url.split("#")[1]);
-            const accessToken = hashParams.get("access_token");
-
-            // Get user info from Google API
-            fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
+            // Send to backend with corrected CORS handling
+            return fetch(`${this.backendUrl}/api/google-auth-simple`, {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
               },
-            })
-              .then((res) => res.json())
-              .then((googleUser) => {
-                console.log("Google user info:", googleUser);
-
-                // Prepare data to send to backend
-                const userData = {
-                  email: googleUser.email,
-                  name: googleUser.name,
-                  googleId: googleUser.sub,
-                  picture: googleUser.picture,
-                  isRegistration: true, // This indicates it's a registration
-                };
-
-                // Send to backend
-                return fetch(`${this.backendUrl}/api/google-auth-simple`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(userData),
-                });
-              })
-              .then((res) => {
-                if (!res.ok) {
-                  return res.json().then((err) => {
-                    throw new Error(err.message || "Google signup failed");
-                  });
-                }
-                return res.json();
-              })
-              .then((data) => {
-                // Store user data
-                localStorage.setItem("user", JSON.stringify(data));
-
-                // Update state
-                this.isAuthenticated = true;
-                this.loggedInUser = data.email;
-
-                // Navigate to dashboard
-                window.location.href = "/dashboard-page";
-              })
-              .catch((error) => {
-                console.error("Google signup error:", error);
-                this.registerError =
-                  error.message || "Failed to sign up with Google";
-                this.isLoading = false;
+              body: JSON.stringify(userData),
+              credentials: 'include',
+              mode: 'cors'
+            });
+          })
+          .then((res) => {
+            if (!res.ok) {
+              return res.json().then((err) => {
+                throw new Error(err.message || "Google login failed");
               });
-          }
-        } catch (e) {
-          // Likely a cross-origin error when trying to access popup.location
-          // This is normal and we just continue polling
-        }
-      }, 500);
-    },
+            }
+            return res.json();
+          })
+          .then((data) => {
+            // Store user data
+            localStorage.setItem("user", JSON.stringify(data));
+
+            // Update state
+            this.isAuthenticated = true;
+            this.loggedInUser = data.email;
+
+            // Navigate to dashboard
+            this.$router.push("/dashboard-page");
+          })
+          .catch((error) => {
+            console.error("Google login error:", error);
+            this.loginError =
+              error.message || "Failed to login with Google";
+            this.isLoading = false;
+          });
+      }
+    } catch (e) {
+      // Likely a cross-origin error when trying to access popup.location
+      // This is normal and we just continue polling
+    }
+  }, 500);
+},
+
+// Corrected registerWithGoogle method
+registerWithGoogle() {
+  // Check terms agreement first
+  if (!this.agreeToTerms) {
+    this.registerError =
+      "You must agree to the Terms of Service and Privacy Policy";
+    return;
+  }
+
+  this.registerError = "";
+  this.isLoading = true;
+
+  // Create a Google OAuth popup
+  const width = 500;
+  const height = 600;
+  const left = window.screen.width / 2 - width / 2;
+  const top = window.screen.height / 2 - height / 2;
+
+  const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+  const clientId =
+    "918102923184-5tg9cgba9m9m64moj6njkodndu148iel.apps.googleusercontent.com"; // Your client ID
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: "http://localhost:5001",
+    response_type: "token",
+    scope: "email profile openid",
+    prompt: "select_account",
+  });
+
+  const popup = window.open(
+    `${googleAuthUrl}?${params.toString()}`,
+    "Google Signup",
+    `width=${width},height=${height},left=${left},top=${top}`
+  );
+
+  // Poll the popup to check when it's redirected
+  const pollTimer = window.setInterval(() => {
+    try {
+      // Check if we can access the popup location
+      if (popup.closed) {
+        window.clearInterval(pollTimer);
+        this.isLoading = false;
+        return;
+      }
+
+      const url = popup.location.href;
+
+      if (url.includes("access_token")) {
+        window.clearInterval(pollTimer);
+        popup.close();
+
+        // Extract the access token
+        const hashParams = new URLSearchParams(url.split("#")[1]);
+        const accessToken = hashParams.get("access_token");
+
+        // Get user info from Google API
+        fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+          .then((res) => res.json())
+          .then((googleUser) => {
+            console.log("Google user info:", googleUser);
+
+            // Prepare data to send to backend
+            const userData = {
+              email: googleUser.email,
+              name: googleUser.name,
+              googleId: googleUser.sub,
+              picture: googleUser.picture,
+              isRegistration: true, // This indicates it's a registration
+            };
+
+            // Send to backend with corrected CORS handling
+            return fetch(`${this.backendUrl}/api/google-auth-simple`, {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+              },
+              body: JSON.stringify(userData),
+              credentials: 'include',
+              mode: 'cors'
+            });
+          })
+          .then((res) => {
+            if (!res.ok) {
+              return res.json().then((err) => {
+                throw new Error(err.message || "Google signup failed");
+              });
+            }
+            return res.json();
+          })
+          .then((data) => {
+            // Store user data
+            localStorage.setItem("user", JSON.stringify(data));
+
+            // Update state
+            this.isAuthenticated = true;
+            this.loggedInUser = data.email;
+
+            // Navigate to dashboard
+            this.$router.push("/dashboard-page");
+          })
+          .catch((error) => {
+            console.error("Google signup error:", error);
+            this.registerError =
+              error.message || "Failed to sign up with Google";
+            this.isLoading = false;
+          });
+      }
+    } catch (e) {
+      // Likely a cross-origin error when trying to access popup.location
+      // This is normal and we just continue polling
+    }
+  }, 500);
+},
     logout() {
       // Clear stored user data
       localStorage.removeItem("user");
