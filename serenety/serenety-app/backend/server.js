@@ -29,14 +29,12 @@ const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 // Setup middleware
 app.use(express.json());
 
-// Replace your current CORS configuration with this
 app.use(cors({
   origin: [
     'http://localhost:5001',
     'http://127.0.0.1:5001',
     'http://localhost:5000',
     'http://127.0.0.1:5000',
-    // Add this line for when your frontend tries to access the Codespaces URL
     'https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev'
   ],
   credentials: true,
