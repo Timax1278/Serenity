@@ -97,32 +97,52 @@ export default {
     const loading = ref(false);
     const error = ref(null);
     const nameFilter = ref("");
-    const backendUrl =
-      "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev";
+
+    // Modifica l'URL per usare localhost
+    const backendUrl = "http://localhost:5000";
 
     const fetchUsers = async () => {
       loading.value = true;
       error.value = null;
 
       try {
-        // Try to use your backend first
-        let response;
-        try {
-          response = await axios.get(`${backendUrl}/api/users`, {
-            headers: {
-              Authorization: `Bearer ${getAuthToken()}`,
-            },
-          });
-        } catch (backendError) {
-          console.log("Fallback to mock API:", backendError);
-          // Fallback to JSONPlaceholder if your backend is not available
-          response = await axios.get(
-            "https://jsonplaceholder.typicode.com/users"
-          );
-        }
+        // Prima prova a usare localStorage per gli utenti registrati
+        const localUsers = JSON.parse(
+          localStorage.getItem("serenity_users") || "[]"
+        );
 
-        users.value = response.data;
-        filteredUsers.value = response.data;
+        if (localUsers.length > 0) {
+          // Usa gli utenti dal localStorage se disponibili
+          const formattedUsers = localUsers.map((user) => ({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+          }));
+
+          users.value = formattedUsers;
+          filteredUsers.value = formattedUsers;
+        } else {
+          // Altrimenti prova il backend
+          try {
+            const response = await axios.get(`${backendUrl}/api/users`, {
+              headers: {
+                Authorization: `Bearer ${getAuthToken()}`,
+              },
+            });
+
+            users.value = response.data;
+            filteredUsers.value = response.data;
+          } catch (backendError) {
+            console.log("Fallback to mock API:", backendError);
+            // Fallback a JSONPlaceholder se il backend non è disponibile
+            const response = await axios.get(
+              "https://jsonplaceholder.typicode.com/users"
+            );
+
+            users.value = response.data;
+            filteredUsers.value = response.data;
+          }
+        }
       } catch (err) {
         error.value = `Error loading users: ${err.message}`;
         console.error(err);
