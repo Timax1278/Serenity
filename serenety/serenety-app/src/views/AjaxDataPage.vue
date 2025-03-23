@@ -99,22 +99,20 @@ export default {
     const nameFilter = ref("");
     const backendUrl =
       "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev";
-    // Aggiungi l'URL locale come alternativa
-    const localBackendUrl = "http://localhost:5000";
 
     const fetchUsers = async () => {
       loading.value = true;
       error.value = null;
 
       try {
-        // Prima prova a caricare gli utenti dal localStorage
-        const localUsers = JSON.parse(
+        // Sempre controlla prima il localStorage
+        const localStorageUsers = JSON.parse(
           localStorage.getItem("serenity_users") || "[]"
         );
 
-        if (localUsers.length > 0) {
+        if (localStorageUsers.length > 0) {
           console.log("Using users from localStorage");
-          const formattedUsers = localUsers.map((user) => ({
+          const formattedUsers = localStorageUsers.map((user) => ({
             id: user._id,
             name: user.name,
             email: user.email,
@@ -122,42 +120,43 @@ export default {
 
           users.value = formattedUsers;
           filteredUsers.value = formattedUsers;
-        } else {
-          // Se non ci sono utenti locali, prova prima il localhost
-          let response;
-          try {
-            console.log("Trying localhost API");
-            response = await axios.get(`${localBackendUrl}/api/users`, {
-              headers: {
-                Authorization: `Bearer ${getAuthToken()}`,
-              },
-            });
-            console.log("Localhost API success");
-          } catch (localError) {
-            console.log("Localhost failed, trying remote backend:", localError);
-            // Se localhost fallisce, prova il backend remoto
-            try {
-              response = await axios.get(`${backendUrl}/api/users`, {
-                headers: {
-                  Authorization: `Bearer ${getAuthToken()}`,
-                },
-              });
-              console.log("Remote backend success");
-            } catch (backendError) {
-              console.log(
-                "Remote backend failed, falling back to mock API:",
-                backendError
-              );
-              // Fallback a JSONPlaceholder se entrambi i backend non sono disponibili
-              response = await axios.get(
-                "https://jsonplaceholder.typicode.com/users"
-              );
-              console.log("Mock API success");
-            }
-          }
+          loading.value = false;
+          return;
+        }
 
+        // Se non ci sono utenti nel localStorage, prova le API
+        const isLocalhost =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+
+        // Determina quale URL usare in base all'ambiente
+        const apiUrl = isLocalhost
+          ? "http://localhost:5000/api/users"
+          : `${backendUrl}/api/users`;
+
+        console.log(`Trying API at: ${apiUrl}`);
+
+        try {
+          const response = await axios.get(apiUrl, {
+            headers: {
+              Authorization: `Bearer ${getAuthToken()}`,
+            },
+          });
+          console.log("API request successful");
           users.value = response.data;
           filteredUsers.value = response.data;
+        } catch (apiError) {
+          console.log(
+            "API request failed, falling back to mock API:",
+            apiError
+          );
+          // Fallback a JSONPlaceholder se l'API non è disponibile
+          const mockResponse = await axios.get(
+            "https://jsonplaceholder.typicode.com/users"
+          );
+          console.log("Mock API success");
+          users.value = mockResponse.data;
+          filteredUsers.value = mockResponse.data;
         }
       } catch (err) {
         error.value = `Error loading users: ${err.message}`;
