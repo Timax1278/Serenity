@@ -103,7 +103,34 @@ export default {
       error.value = null;
 
       try {
-        // Prima controlla se ci sono utenti nel localStorage
+        // Determina se siamo in localhost
+        const isLocalhost =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+
+        // Determina l'URL dell'API in base all'ambiente
+        const apiUrl = isLocalhost
+          ? "http://localhost:5000/api/users"
+          : "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev/api/users";
+
+        // In localhost, prova prima l'API e poi il localStorage
+        if (isLocalhost) {
+          try {
+            console.log(`In localhost, trying API first: ${apiUrl}`);
+            const response = await axios.get(apiUrl);
+            console.log("Local API success:", response.data);
+
+            users.value = response.data;
+            filteredUsers.value = response.data;
+            loading.value = false;
+            return;
+          } catch (localApiError) {
+            console.error("Local API failed:", localApiError.message);
+            // Continua con il localStorage se l'API locale fallisce
+          }
+        }
+
+        // Controlla il localStorage
         const localStorageUsers = JSON.parse(
           localStorage.getItem("serenity_users") || "[]"
         );
@@ -118,41 +145,44 @@ export default {
 
           users.value = formattedUsers;
           filteredUsers.value = formattedUsers;
+        } else if (!isLocalhost) {
+          // Se non siamo in localhost e non ci sono utenti nel localStorage, prova l'API remota
+          try {
+            console.log(`Trying remote API: ${apiUrl}`);
+            const response = await axios.get(apiUrl);
+            console.log("Remote API success:", response.data);
+
+            users.value = response.data;
+            filteredUsers.value = response.data;
+          } catch (remoteApiError) {
+            console.error("Remote API failed:", remoteApiError.message);
+            fallbackToMockAPI();
+          }
         } else {
-          // Determina l'URL del server in base all'ambiente
-          const isLocalhost =
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1";
-          const apiUrl = isLocalhost
-            ? "http://localhost:5000/api/users"
-            : "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev/api/users";
-
-          console.log(`Fetching users from: ${apiUrl}`);
-
-          // Esegui la chiamata API senza autenticazione
-          const response = await axios.get(apiUrl);
-          console.log("API response:", response.data);
-
-          users.value = response.data;
-          filteredUsers.value = response.data;
+          // Se siamo in localhost e sia l'API che il localStorage hanno fallito
+          fallbackToMockAPI();
         }
       } catch (err) {
-        console.error("Error fetching users:", err);
+        console.error("General error:", err);
         error.value = `Error loading users: ${err.message}`;
-
-        // Fallback al mock API in caso di errore
-        try {
-          console.log("Falling back to mock API");
-          const mockResponse = await axios.get(
-            "https://jsonplaceholder.typicode.com/users"
-          );
-          users.value = mockResponse.data;
-          filteredUsers.value = mockResponse.data;
-        } catch (mockError) {
-          console.error("Mock API also failed:", mockError);
-        }
+        fallbackToMockAPI();
       } finally {
         loading.value = false;
+      }
+    };
+
+    const fallbackToMockAPI = async () => {
+      try {
+        console.log("Falling back to mock API");
+        const mockResponse = await axios.get(
+          "https://jsonplaceholder.typicode.com/users"
+        );
+        console.log("Mock API success");
+        users.value = mockResponse.data;
+        filteredUsers.value = mockResponse.data;
+      } catch (mockError) {
+        console.error("Even mock API failed:", mockError);
+        error.value = "Could not load users from any source";
       }
     };
 
