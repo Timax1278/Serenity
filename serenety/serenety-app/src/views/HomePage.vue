@@ -233,9 +233,13 @@ export default {
       loggedInUser: null,
       loginError: "",
       registerError: "",
-      // Hardcoded backend URL for GitHub Codespaces
-      backendUrl:
-        "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev",
+      // Opzioni per il backend URL
+      backendUrlOptions: {
+        codespaces:
+          "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev",
+        local: "http://localhost:5000",
+      },
+      backendUrl: "",
       // New properties for enhanced UI
       showPassword: false,
       isLoading: false,
@@ -246,6 +250,9 @@ export default {
     };
   },
   created() {
+    // Determina l'URL del backend in base all'ambiente
+    this.detectBackendUrl();
+
     // Check if user is already logged in
     const storedUser =
       localStorage.getItem("user") || sessionStorage.getItem("user");
@@ -277,6 +284,68 @@ export default {
     },
   },
   methods: {
+    // Metodo per rilevare l'URL del backend
+    detectBackendUrl() {
+      // Controlla prima se c'è un URL salvato nelle preferenze dell'utente
+      const savedBackendUrl = localStorage.getItem("preferredBackendUrl");
+      if (savedBackendUrl) {
+        this.backendUrl = savedBackendUrl;
+        return;
+      }
+
+      // Altrimenti, prova a determinare l'ambiente
+      const hostname = window.location.hostname;
+
+      // Se siamo su GitHub Codespaces
+      if (
+        hostname.includes("github.dev") ||
+        hostname.includes("githubpreview.dev")
+      ) {
+        this.backendUrl = this.backendUrlOptions.codespaces;
+      } else {
+        // Altrimenti, prova la connessione locale
+        this.testBackendConnection();
+      }
+    },
+
+    // Prova a connettersi al backend locale, altrimenti usa Codespaces
+    async testBackendConnection() {
+      try {
+        // Prova prima la connessione locale
+        const response = await fetch(
+          `${this.backendUrlOptions.local}/api/status`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            // Timeout breve per non bloccare l'interfaccia
+            signal: AbortSignal.timeout(2000),
+          }
+        );
+
+        if (response.ok) {
+          console.log("Connessione locale riuscita");
+          this.backendUrl = this.backendUrlOptions.local;
+        } else {
+          throw new Error("Connessione locale fallita");
+        }
+      } catch (error) {
+        console.log("Fallback su URL Codespaces:", error);
+        this.backendUrl = this.backendUrlOptions.codespaces;
+      }
+
+      // Salva la preferenza per future visite
+      localStorage.setItem("preferredBackendUrl", this.backendUrl);
+    },
+
+    // Metodo per cambiare manualmente l'URL del backend
+    switchBackendUrl(type) {
+      this.backendUrl = this.backendUrlOptions[type];
+      localStorage.setItem("preferredBackendUrl", this.backendUrl);
+      console.log(`Backend URL cambiato a: ${this.backendUrl}`);
+    },
+
     async register() {
       this.registerError = "";
       this.isLoading = true;
@@ -539,6 +608,7 @@ export default {
           this.isLoading = false;
         });
     },
+
     logout() {
       // Clear stored user data
       localStorage.removeItem("user");
@@ -561,6 +631,43 @@ export default {
     createConfetti() {
       // Simple confetti effect - in a real app, you might use a library
       console.log("Success! 🎉");
+    },
+
+    // Metodo per gestire problemi di connessione al backend
+    handleConnectionError() {
+      // Mostra un messaggio all'utente
+      this.loginError =
+        "Problema di connessione al server. Prova a cambiare modalità di connessione.";
+
+      // Offri la possibilità di cambiare URL del backend
+      const currentType =
+        this.backendUrl === this.backendUrlOptions.local
+          ? "codespaces"
+          : "local";
+      const alternativeType =
+        this.backendUrl === this.backendUrlOptions.local
+          ? "codespaces"
+          : "local";
+
+      console.log(
+        `Connessione a ${currentType} fallita. Prova a connetterti a ${alternativeType}`
+      );
+
+      // Opzionalmente, puoi implementare un popup o un pulsante per cambiare la connessione
+    },
+  },
+  computed: {
+    isBackendConnected() {
+      return !!this.backendUrl;
+    },
+    connectionMode() {
+      if (this.backendUrl === this.backendUrlOptions.local) {
+        return "Connessione locale";
+      } else if (this.backendUrl === this.backendUrlOptions.codespaces) {
+        return "Connessione cloud (GitHub Codespaces)";
+      } else {
+        return "Non connesso";
+      }
     },
   },
 };
