@@ -345,12 +345,12 @@ export default {
       console.log(`Backend URL cambiato a: ${this.backendUrl}`);
     },
 
+    // Updated register method
     async register() {
       this.registerError = "";
       this.isLoading = true;
 
       try {
-        // Log the data we're sending
         console.log("Registration attempt with:", {
           name: this.registerData.name,
           email: this.registerData.email,
@@ -366,46 +366,54 @@ export default {
           throw new Error("All fields are required");
         }
 
-        // Check terms agreement
-        if (!this.agreeToTerms) {
-          throw new Error(
-            "You must agree to the Terms of Service and Privacy Policy"
-          );
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(this.registerData.email)) {
+          throw new Error("Invalid email format");
         }
 
-        console.log("Using backend URL:", this.backendUrl);
-        console.log(
-          "Sending registration data:",
-          JSON.stringify(this.registerData)
+        // Check if email is already in use (in local storage)
+        const usersJSON = localStorage.getItem("serenity_users") || "[]";
+        let users = JSON.parse(usersJSON);
+
+        const existingUser = users.find(
+          (user) => user.email === this.registerData.email
         );
-
-        const res = await fetch(`${this.backendUrl}/api/users`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(this.registerData),
-        });
-
-        console.log("Registration response status:", res.status);
-
-        // Handle non-successful responses
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || "Registration failed");
+        if (existingUser) {
+          throw new Error("Email already in use");
         }
 
-        // Parse successful response
-        const data = await res.json();
-        console.log("Registration successful:", data);
+        // Create new user object
+        const newUser = {
+          _id: Date.now().toString(),
+          name: this.registerData.name,
+          email: this.registerData.email,
+          password: this.registerData.password,
+          authProvider: "local",
+          isAdmin: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Add user to local storage database
+        users.push(newUser);
+        localStorage.setItem("serenity_users", JSON.stringify(users));
+
+        console.log("User registered locally:", newUser);
+
+        const userWithoutPassword = { ...newUser };
+        delete userWithoutPassword.password;
 
         // Show success animation
         this.createConfetti();
 
-        // Store user data and update UI
-        localStorage.setItem("user", JSON.stringify(data));
+        // Store user data
+        localStorage.setItem("user", JSON.stringify(userWithoutPassword));
+
+        // Update UI
         this.isAuthenticated = true;
-        this.loggedInUser = data.email;
+        this.loggedInUser = userWithoutPassword.email;
+
+        // Navigate to dashboard
         this.$router.push("/dashboard-page");
       } catch (err) {
         console.error("Registration error:", err);
@@ -416,6 +424,7 @@ export default {
       }
     },
 
+    // Updated login method
     async login() {
       this.loginError = "";
       this.isLoading = true;
@@ -426,40 +435,45 @@ export default {
           password: "[HIDDEN]",
         });
 
-        // Use the login endpoint
-        const res = await fetch(`${this.backendUrl}/api/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: this.loginData.email,
-            password: this.loginData.password,
-          }),
-        });
-
-        console.log("Login response status:", res.status);
-
-        // Handle non-successful responses
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || "Login failed");
+        // Validate required fields
+        if (!this.loginData.email || !this.loginData.password) {
+          throw new Error("Email and password are required");
         }
 
-        // Parse successful response
-        const data = await res.json();
-        console.log("Login successful:", data);
+        // Get users from local storage
+        const usersJSON = localStorage.getItem("serenity_users") || "[]";
+        const users = JSON.parse(usersJSON);
+
+        // Find user by email
+        const user = users.find((user) => user.email === this.loginData.email);
+
+        // Check if user exists
+        if (!user) {
+          throw new Error("Invalid email or password");
+        }
+
+        // Check password
+        if (user.password !== this.loginData.password) {
+          throw new Error("Invalid email or password");
+        }
+
+        const userWithoutPassword = { ...user };
+        delete userWithoutPassword.password;
+
+        console.log("Login successful:", userWithoutPassword);
 
         // Store user data based on remember me preference
         if (this.rememberMe) {
-          localStorage.setItem("user", JSON.stringify(data));
+          localStorage.setItem("user", JSON.stringify(userWithoutPassword));
         } else {
-          sessionStorage.setItem("user", JSON.stringify(data));
+          sessionStorage.setItem("user", JSON.stringify(userWithoutPassword));
         }
 
         // Update UI
         this.isAuthenticated = true;
-        this.loggedInUser = data.email;
+        this.loggedInUser = userWithoutPassword.email;
+
+        // Navigate to dashboard
         this.$router.push("/dashboard-page");
       } catch (err) {
         console.error("Login error:", err);
