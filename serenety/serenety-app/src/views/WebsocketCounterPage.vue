@@ -82,9 +82,10 @@ export default {
       lastUpdateTime: "Never",
       visitorHistory: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       historyLabels: [],
-      // Hardcoded backend URL - replace with your actual WebSocket URL
-      websocketUrl:
+      // Base URLs - will be determined dynamically
+      githubWebsocketUrl:
         "wss://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev/ws",
+      localWebsocketUrl: "ws://localhost:5000/ws",
       reconnectAttempts: 0,
       maxReconnectAttempts: 5,
       reconnectTimeout: null,
@@ -96,6 +97,13 @@ export default {
     },
     maxHistoryCount() {
       return Math.max(...this.visitorHistory, 1);
+    },
+    // Dynamically determine the WebSocket URL based on the current environment
+    websocketUrl() {
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      return isLocalhost ? this.localWebsocketUrl : this.githubWebsocketUrl;
     },
   },
   created() {
@@ -122,7 +130,8 @@ export default {
           this.socket.close();
         }
 
-        // Create new WebSocket connection
+        // Create new WebSocket connection using the computed property
+        console.log(`Connecting to WebSocket at: ${this.websocketUrl}`);
         this.socket = new WebSocket(this.websocketUrl);
 
         // Set up event handlers
@@ -130,8 +139,6 @@ export default {
         this.socket.onmessage = this.handleSocketMessage;
         this.socket.onclose = this.handleSocketClose;
         this.socket.onerror = this.handleSocketError;
-
-        console.log("Attempting to connect to WebSocket:", this.websocketUrl);
       } catch (error) {
         console.error("WebSocket connection error:", error);
         this.connectionStatus = "disconnected";
