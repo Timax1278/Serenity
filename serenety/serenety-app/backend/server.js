@@ -29,23 +29,35 @@ const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 // Setup middleware
 app.use(express.json());
 
+// Replace your current CORS configuration with this
 app.use(cors({
-  origin: [
-    'http://localhost:5001',
-    'http://127.0.0.1:5001',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    'https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev'
-  ],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5001',
+      'http://127.0.0.1:5001',
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+      'https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev',
+      'http://localhost:3000' // Add any other origins you might use
+    ];
+    
+    if(allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // During development, you can allow all origins
+      // In production: callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Make sure you have this preflight handler
-app.options('*', cors());
-
-// Add this preflight handler for OPTIONS requests
+// Make sure these lines come AFTER the CORS middleware above
 app.options('*', cors());
 
 // Create a simple data store
