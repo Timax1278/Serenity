@@ -29,21 +29,23 @@ const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 // Setup middleware
 app.use(express.json());
 
-// Configure CORS to accept requests from any origin in development
-// Replace your current CORS configuration in the server.js file with this:
-
-// Configure CORS to accept requests from your frontend port
+// Replace your current CORS configuration with this
 app.use(cors({
   origin: [
     'http://localhost:5001',
     'http://127.0.0.1:5001',
     'http://localhost:5000',
-    'http://127.0.0.1:5000'
+    'http://127.0.0.1:5000',
+    // Add this line for when your frontend tries to access the Codespaces URL
+    'https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Make sure you have this preflight handler
+app.options('*', cors());
 
 // Add this preflight handler for OPTIONS requests
 app.options('*', cors());
@@ -925,7 +927,7 @@ app.post('/api/google-auth-secure', async (req, res) => {
 });
 
 // Start the server
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
   console.log(`WebSocket server running on ws://localhost:${port}/ws`);
   console.log(`Default admin credentials: admin@example.com / admin123`);
