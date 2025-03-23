@@ -97,15 +97,13 @@ export default {
     const loading = ref(false);
     const error = ref(null);
     const nameFilter = ref("");
-    const backendUrl =
-      "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev";
 
     const fetchUsers = async () => {
       loading.value = true;
       error.value = null;
 
       try {
-        // Sempre controlla prima il localStorage
+        // Prima controlla se ci sono utenti nel localStorage
         const localStorageUsers = JSON.parse(
           localStorage.getItem("serenity_users") || "[]"
         );
@@ -120,47 +118,39 @@ export default {
 
           users.value = formattedUsers;
           filteredUsers.value = formattedUsers;
-          loading.value = false;
-          return;
-        }
+        } else {
+          // Determina l'URL del server in base all'ambiente
+          const isLocalhost =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1";
+          const apiUrl = isLocalhost
+            ? "http://localhost:5000/api/users"
+            : "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev/api/users";
 
-        // Se non ci sono utenti nel localStorage, prova le API
-        const isLocalhost =
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1";
+          console.log(`Fetching users from: ${apiUrl}`);
 
-        // Determina quale URL usare in base all'ambiente
-        const apiUrl = isLocalhost
-          ? "http://localhost:5000/api/users"
-          : `${backendUrl}/api/users`;
+          // Esegui la chiamata API senza autenticazione
+          const response = await axios.get(apiUrl);
+          console.log("API response:", response.data);
 
-        console.log(`Trying API at: ${apiUrl}`);
-
-        try {
-          const response = await axios.get(apiUrl, {
-            headers: {
-              Authorization: `Bearer ${getAuthToken()}`,
-            },
-          });
-          console.log("API request successful");
           users.value = response.data;
           filteredUsers.value = response.data;
-        } catch (apiError) {
-          console.log(
-            "API request failed, falling back to mock API:",
-            apiError
-          );
-          // Fallback a JSONPlaceholder se l'API non è disponibile
+        }
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        error.value = `Error loading users: ${err.message}`;
+
+        // Fallback al mock API in caso di errore
+        try {
+          console.log("Falling back to mock API");
           const mockResponse = await axios.get(
             "https://jsonplaceholder.typicode.com/users"
           );
-          console.log("Mock API success");
           users.value = mockResponse.data;
           filteredUsers.value = mockResponse.data;
+        } catch (mockError) {
+          console.error("Mock API also failed:", mockError);
         }
-      } catch (err) {
-        error.value = `Error loading users: ${err.message}`;
-        console.error(err);
       } finally {
         loading.value = false;
       }
@@ -181,13 +171,6 @@ export default {
     const resetFilter = () => {
       nameFilter.value = "";
       filteredUsers.value = users.value;
-    };
-
-    const getAuthToken = () => {
-      const user = JSON.parse(
-        localStorage.getItem("user") || sessionStorage.getItem("user") || "{}"
-      );
-      return user.token || "";
     };
 
     onMounted(() => {
