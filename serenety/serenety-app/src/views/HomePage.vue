@@ -537,16 +537,11 @@ export default {
                   isRegistration: false, // This indicates it's a login attempt
                 };
 
-                // Send to backend with corrected CORS handling
+                // Send to backend
                 return fetch(`${this.backendUrl}/api/google-auth-simple`, {
                   method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                  },
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify(userData),
-                  credentials: "include",
-                  mode: "cors",
                 });
               })
               .then((res) => {
@@ -582,7 +577,7 @@ export default {
       }, 500);
     },
 
-    // Corrected registerWithGoogle method
+    // Similarly update your registerWithGoogle method
     registerWithGoogle() {
       // Check terms agreement first
       if (!this.agreeToTerms) {
@@ -657,16 +652,11 @@ export default {
                   isRegistration: true, // This indicates it's a registration
                 };
 
-                // Send to backend with corrected CORS handling
+                // Send to backend
                 return fetch(`${this.backendUrl}/api/google-auth-simple`, {
                   method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                  },
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify(userData),
-                  credentials: "include",
-                  mode: "cors",
                 });
               })
               .then((res) => {

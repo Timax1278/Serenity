@@ -440,7 +440,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Add or update this endpoint in your backend server.js file
-app.post('/api/google-auth-simple', async (req, res) => {
+('/api/google-auth-simple', async (req, res) => {
   try {
     const { googleId, email, name, picture, isRegistration } = req.body;
     
@@ -521,60 +521,78 @@ app.post('/api/google-auth-simple', async (req, res) => {
   }
 });
 
-// Google Authentication endpoint
-app.post('/api/google-auth', async (req, res) => {
+// Add this specific handler for the Google auth route (add this to your backend)
+app.post('/api/google-auth-simple', async (req, res) => {
   try {
-    console.log("Received Google auth data:", req.body);
+    const { googleId, email, name, picture, isRegistration } = req.body;
     
-    const { googleId, email, name, picture, idToken } = req.body;
+    console.log("Received Google auth data:", { 
+      googleId: googleId ? "[PRESENT]" : "[MISSING]", 
+      email, 
+      name, 
+      picture: picture ? "[PRESENT]" : "[MISSING]",
+      isRegistration 
+    });
     
-    if (!email || !googleId) {
+    if (!googleId || !email || !name) {
       return res.status(400).json({ 
-        message: 'Email and Google ID are required'
+        message: 'GoogleId, Email, and Name are required for Google authentication'
       });
     }
     
-    // Verify the token if provided
-    if (idToken) {
-      try {
-        await verifyGoogleToken(idToken);
-      } catch (error) {
-        return res.status(401).json({ message: 'Invalid Google token' });
-      }
-    }
-    
-    // Check if user already exists
+    // Check if user exists
     let user = await dataStore.findOne('users', { email });
     
-    if (user) {
-      // Update existing user with Google info if not already set
-      if (!user.googleId) {
-        await dataStore.update('users', { _id: user._id }, { 
-          googleId, 
-          picture,
-          authProvider: 'google'
-        });
-        
-        // Get the updated user
-        user = await dataStore.findOne('users', { _id: user._id });
-      }
-    } else {
-      // Create a new user
+    // If user doesn't exist and this is a registration, create new user
+    if (!user && isRegistration) {
+      console.log("Creating new user with Google account:", { name, email, googleId });
+      
       user = await dataStore.insert('users', {
         name,
         email,
         googleId,
         picture,
-        isAdmin: false,
+        isAdmin: false, // Default to non-admin for Google auth
         authProvider: 'google',
         createdAt: new Date().toISOString()
       });
+      
+      console.log("Google user created successfully:", user);
+    }
+    // If user doesn't exist and this is a login attempt
+    else if (!user && !isRegistration) {
+      return res.status(401).json({ 
+        message: 'No account exists with this email. Please register first.'
+      });
+    }
+    // If user exists but doesn't have googleId (user previously registered with email/password)
+    else if (user && !user.googleId) {
+      // Link the Google account to the existing user
+      console.log("Linking Google account to existing user:", email);
+      
+      await dataStore.update('users', { email }, {
+        googleId,
+        picture: picture || user.picture,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Get the updated user
+      user = await dataStore.findOne('users', { email });
+    }
+    // If user exists with googleId but it doesn't match (someone trying to use same email with different Google account)
+    else if (user && user.googleId && user.googleId !== googleId) {
+      return res.status(401).json({ 
+        message: 'This email is already linked to a different Google account' 
+      });
     }
     
-    // Don't send the password back in the response
-    const { password, ...userWithoutPassword } = user;
+    // Verify the user was found or created
+    if (!user) {
+      return res.status(500).json({ message: 'Failed to authenticate with Google' });
+    }
     
-    console.log("Google authentication successful for:", email);
+    // Don't send any sensitive data back in the response
+    const { password, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
   } catch (error) {
     console.error('Google authentication error:', error);
