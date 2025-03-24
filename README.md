@@ -4,6 +4,29 @@
 -----------------------------------------------------------------------------------------------------------------
 Descrizione: L'idea consiste nel creare una piattaforma dedicata alla salute mentale degli adolescenti, che offra servizi su misura come terapia, meditazione guidata, risorse per la salute mentale e uno spazio sociale sicuro dove i ragazzi possano connettersi tra loro. La piattaforma potrebbe fornire un approccio olistico al benessere mentale, concentrandosi su supporto emotivo, gestione dello stress e sviluppo di meccanismi di coping sani, attraverso l'aiuto di professionisti e il supporto tra pari. Un'app che offre meditazione guidata, spazi sicuri di discussione e la possibilità di accedere a terapie personalizzate con specialisti, aiutando gli adolescenti a gestire lo stress e migliorare il loro benessere emotivo.
 
+-----------------------------------------------------------------------------------------------------------------
+Per usare la configurazione automatica, segui questi passaggi:
+
+Installa Docker Desktop sul tuo computer, se non lo hai già fatto.
+
+Scarica il file ZIP di Serenity dalla piattaforma.
+
+Estrai il file "Serenity-main.zip" sul tuo computer.
+
+Vai nella cartella estratta "Serenity-main".
+
+Entra nella cartella "serenity", quindi nella sottocartella "serenity-app".
+
+Avvia il file start.bat.
+
+Aspetta che la configurazione venga completata.
+
+Una volta completata la configurazione, apri il tuo browser e cerca localhost:5001 per accedere all'applicazione.
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+
 **Target**
 -----------------------------------------------------------------------------------------------------------------
 Adolescenti / Genitori / Tutor / Insegnanti / Professionisti del settore / Istituti Scolastici
