@@ -43,19 +43,23 @@ const dataStore = {
     try {
       const filePath = path.join(__dirname, 'data.json');
       const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
-      
+  
       if (fileExists) {
         const data = await fs.readFile(filePath, 'utf8');
         this.data = JSON.parse(data);
         console.log('Data loaded from file');
+        // Assicura che le nuove collezioni esistano
+        if (!this.data.groups) this.data.groups = [];
+        if (!this.data.chatMessages) this.data.chatMessages = [];
       } else {
         console.log('No existing data file, creating a new one');
-        this.data = { users: [] };
+        // Inizializza con tutte le collezioni necessarie
+        this.data = { users: [], groups: [], chatMessages: [] };
         await this.save();
       }
     } catch (error) {
       console.log('Error reading file, starting with empty data store:', error.message);
-      this.data = { users: [] };
+      this.data = { users: [], groups: [], chatMessages: [] };
       await this.save();
     }
   },
@@ -144,42 +148,110 @@ function broadcastVisitorCount() {
   }
 }
 
-// WebSocket connection handler
+// Mappa per tracciare a quale gruppo ogni client WebSocket è interessato
+const clientGroupSubscriptions = new Map(); // ws -> groupId
+
+// server.js
+
+// ... (altre parti del codice sopra) ...
+
+// --- BLOCCO WEBSOCKET SERVER CORRETTO ---
 wss.on('connection', (ws) => {
+  // 1. Aggiungi il nuovo client al Set globale
   clients.add(ws);
+
+  // 2. Gestisci il contatore visitatori (se vuoi)
   visitorCount++;
-  console.log(`New client connected. Total visitors: ${visitorCount}`);
-  
-  // Broadcast updated count to all clients
-  broadcastVisitorCount();
-  
-  // Handle incoming messages
+  console.log(`[WS CONNECT] New client connected. Total visitors: ${visitorCount}. Total connections: ${clients.size}`);
+
+  // 3. Invia il conteggio attuale al NUOVO client
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'visitor_count', count: visitorCount }));
+  }
+
+  // 4. Invia il conteggio aggiornato a TUTTI i client (incluso il nuovo)
+  broadcastVisitorCount(); // Funzione che invia { type: 'visitor_count', count: visitorCount } a tutti in 'clients'
+
+  // 5. Definisci l'handler per i messaggi da QUESTO client
   ws.on('message', (message) => {
     try {
-      // Convert Buffer to string if necessary
       const messageStr = message.toString();
       const data = JSON.parse(messageStr);
-      console.log('Received message:', data);
-      
-      // Handle specific message types if needed
-      if (data.type === 'join_visitor_counter') {
-        console.log('Client joined visitor counter');
+      console.log('[WS RECEIVED] Message from client:', data);
+
+      if (data.type === 'subscribe_group' && data.groupId) {
+        console.log(`[WS SUBSCRIBE] Client subscribing to group ${data.groupId}`);
+        clientGroupSubscriptions.set(ws, data.groupId); // Associa il client al gruppo
+        console.log('[WS SUB MAP after subscribe]', clientGroupSubscriptions); // Log mappa
       }
+      else if (data.type === 'unsubscribe_group') {
+         console.log(`[WS UNSUBSCRIBE] Client explicitly unsubscribing from group`);
+         clientGroupSubscriptions.delete(ws);
+         console.log('[WS SUB MAP after unsubscribe]', clientGroupSubscriptions); // Log mappa
+      }
+      else if (data.type === 'join_visitor_counter') {
+           console.log('[WS INFO] Client joined visitor counter explicitly.'); // Giusto per log
+       }
+      // Aggiungi qui altri eventuali tipi di messaggi gestiti
+
     } catch (error) {
-      console.error('Error parsing message:', error);
+      console.error('[ERROR] Error parsing WebSocket message:', error);
     }
   });
-  
-  // Handle client disconnection
+
+  // 6. Definisci l'handler per la chiusura della connessione di QUESTO client
   ws.on('close', () => {
+    const wasSubscribedTo = clientGroupSubscriptions.get(ws); // Vedi se era iscritto a un gruppo
+    console.log(`[WS DISCONNECT] Client disconnected.${wasSubscribedTo ? ` Was subscribed to group ${wasSubscribedTo}.` : ''}`);
+
+    // Rimuovi il client dal Set globale
     clients.delete(ws);
-    visitorCount = Math.max(0, visitorCount - 1);
-    console.log(`Client disconnected. Total visitors: ${visitorCount}`);
-    
-    // Broadcast updated count to all clients
+    // Rimuovi l'eventuale sottoscrizione dalla mappa
+    clientGroupSubscriptions.delete(ws);
+
+    // Aggiorna il contatore visitatori (se vuoi)
+    visitorCount = Math.max(0, visitorCount - 1); // Evita numeri negativi
+    console.log(`[WS DISCONNECT] Client removed. Total visitors: ${visitorCount}. Total connections: ${clients.size}`);
+    console.log('[WS SUB MAP after close]', clientGroupSubscriptions); // Log mappa
+
+    // Invia il conteggio aggiornato ai client rimanenti
     broadcastVisitorCount();
   });
+
+  // 7. Definisci l'handler per eventuali errori su QUESTO client
+   ws.on('error', (error) => {
+       console.error('[ERROR] WebSocket error on specific client:', error);
+       // La connessione potrebbe chiudersi automaticamente dopo un errore,
+       // ma potresti voler fare pulizia aggiuntiva qui se necessario.
+   });
+
 });
+// --- FINE BLOCCO WEBSOCKET SERVER ---
+
+// ... (La funzione broadcastGroupUpdate che hai già va bene) ...
+// function broadcastGroupUpdate(groupId, data) { ... }
+
+// ... (Il resto del tuo codice API, start server, ecc.) ...
+
+// Funzione per inviare aggiornamenti specifici di un gruppo ai client iscritti
+function broadcastGroupUpdate(groupId, data) {
+  const message = JSON.stringify({ ...data, groupId });
+  let sentCount = 0; // Contatore per debug
+  console.log(`[WS BROADCASTING] For group ${groupId}:`, data);
+  console.log('[WS SUB MAP AT BROADCAST]', clientGroupSubscriptions); // Mostra la mappa al momento del broadcast
+
+  for (const client of clients) { // Assumendo che 'clients' sia il Set di tutti i WS connessi
+      const isSubscribed = clientGroupSubscriptions.get(client) === groupId;
+      console.log(`[WS BROADCAST CHECK] Client connected: ${client.readyState === WebSocket.OPEN}, Subscribed to ${groupId}? ${isSubscribed}`);
+
+      if (client.readyState === WebSocket.OPEN && isSubscribed) {
+          console.log(`[WS SENDING] Sending message to a subscribed client for group ${groupId}.`);
+          client.send(message);
+          sentCount++;
+      }
+  }
+   console.log(`[WS BROADCAST SENT] Message sent to ${sentCount} clients subscribed to group ${groupId}.`);
+}
 
 // Crea un admin di default se non esiste
 async function createDefaultAdmin() {
@@ -233,27 +305,34 @@ async function verifyGoogleToken(token) {
   }
 }
 
-// Middleware per verificare se l'utente è admin
+// QUESTA È LA NUOVA VERSIONE (DA USARE)
 function requireAdmin(req, res, next) {
-  if (!req.body.adminToken) {
-    return res.status(401).json({ message: 'Admin authentication required' });
+  console.log('[DEBUG] requireAdmin middleware checking request...');
+  // Controlla direttamente email/password nel body
+  const { adminEmail, adminPassword } = req.body;
+
+  if (!adminEmail || !adminPassword) {
+    console.log('[DEBUG] requireAdmin: FAILED - Missing adminEmail or adminPassword in request body.');
+    return res.status(400).json({ message: 'Admin authentication requires Email and Password in request body for this operation.' });
   }
-  
-  // Verifica il token admin (in questo esempio semplice, verifichiamo solo l'email e la password)
-  dataStore.findOne('users', { 
-    email: req.body.adminEmail,
-    password: req.body.adminPassword,
-    isAdmin: true 
+
+  console.log(`[DEBUG] requireAdmin: Checking credentials for email: ${adminEmail}`);
+  dataStore.findOne('users', {
+    email: adminEmail,
+    password: adminPassword, // !!! Ricorda: confronto password insicuro !!!
+    isAdmin: true
   })
     .then(admin => {
       if (!admin) {
-        return res.status(403).json({ message: 'Admin access denied' });
+        console.log(`[DEBUG] requireAdmin: FAILED - Admin access denied for ${adminEmail}. Invalid credentials or not an admin.`);
+        return res.status(403).json({ message: 'Admin access denied. Invalid credentials or user is not an admin.' });
       }
+      console.log(`[DEBUG] requireAdmin: SUCCESS - Admin access granted for ${admin.email}`);
       req.admin = admin;
       next();
     })
     .catch(error => {
-      console.error('Admin authentication error:', error);
+      console.error('[ERROR] requireAdmin: Error during admin user lookup:', error);
       res.status(500).json({ message: 'Server error during admin authentication' });
     });
 }
@@ -412,6 +491,243 @@ app.post('/api/login', async (req, res) => {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login' });
   }
+});
+
+// --- Endpoint Amministrazione Gruppi ---
+
+// Crea un nuovo gruppo (solo Admin)
+app.post('/api/admin/groups', requireAdmin, async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: 'Group name is required' });
+    }
+
+    const newGroup = await dataStore.insert('groups', {
+      name,
+      description: description || '', // Descrizione opzionale
+      createdBy: req.admin._id, // ID dell'admin che l'ha creato
+      createdAt: new Date().toISOString(),
+      members: [], // Inizia senza membri
+    });
+
+    res.status(201).json(newGroup);
+  } catch (error) {
+    console.error('Error creating group:', error);
+    res.status(500).json({ error: 'Failed to create group' });
+  }
+});
+
+// Ottieni tutti i gruppi (solo Admin - potrebbe essere utile per la gestione)
+app.get('/api/admin/groups', requireAdmin, async (req, res) => {
+    try {
+        const groups = await dataStore.find('groups');
+        res.json(groups);
+    } catch (error) {
+        console.error('Error fetching groups for admin:', error);
+        res.status(500).json({ error: 'Failed to fetch groups' });
+    }
+});
+
+
+// Elimina un gruppo (solo Admin)
+app.delete('/api/admin/groups/:groupId', requireAdmin, async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const group = await dataStore.findOne('groups', { _id: groupId });
+
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+
+        // Elimina il gruppo
+        await dataStore.delete('groups', { _id: groupId });
+
+        // Opzionale: Elimina anche tutti i messaggi associati a quel gruppo
+        await dataStore.delete('chatMessages', { groupId: groupId });
+        console.log(`Deleted messages for group ${groupId}`);
+
+        res.json({ message: 'Group and associated messages deleted successfully', deletedGroupId: groupId });
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        res.status(500).json({ error: 'Failed to delete group' });
+    }
+});
+
+// --- Endpoint Utente Gruppi ---
+
+// Ottieni lista di tutti i gruppi visibili agli utenti
+// TODO: Proteggere con verifyToken quando implementato
+app.get('/api/groups', /* verifyToken, */ async (req, res) => {
+  try {
+    const groups = await dataStore.find('groups');
+    // Restituisci solo le informazioni necessarie per la lista
+    const groupList = groups.map(g => ({
+      _id: g._id,
+      name: g.name,
+      description: g.description,
+      memberCount: g.members.length // Numero di membri
+    }));
+    res.json(groupList);
+  } catch (error) {
+    console.error('Error fetching groups list:', error);
+    res.status(500).json({ error: 'Failed to fetch groups' });
+  }
+});
+
+// Ottieni dettagli di un gruppo specifico (inclusi membri e messaggi recenti)
+// TODO: Proteggere con verifyToken quando implementato
+app.get('/api/groups/:groupId', /* verifyToken, */ async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const group = await dataStore.findOne('groups', { _id: groupId });
+
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+
+    // Ottieni gli ultimi N messaggi (es. ultimi 50)
+    const allMessages = await dataStore.find('chatMessages', { groupId: groupId });
+    // Ordina per timestamp (assumendo che _id sia basato su Date.now())
+    allMessages.sort((a, b) => parseInt(a._id) - parseInt(b._id));
+    const recentMessages = allMessages.slice(-50); // Prendi gli ultimi 50
+
+    // Ottieni i dettagli dei membri (per ora solo gli ID)
+    // In un DB reale faresti una join o query separate per i nomi
+    const memberIds = group.members;
+    // const membersDetails = await dataStore.find('users', {_id: {$in: memberIds}}); // Esempio con sintassi tipo MongoDB
+
+    res.json({
+      ...group,
+      messages: recentMessages, // Aggiungi messaggi
+      // members: membersDetails // Potresti voler restituire più dettagli sui membri
+    });
+  } catch (error) {
+    console.error('Error fetching group details:', error);
+    res.status(500).json({ error: 'Failed to fetch group details' });
+  }
+});
+
+// Entra in un gruppo
+// TODO: Proteggere con verifyToken quando implementato e usare req.user.id
+app.post('/api/groups/:groupId/join', /* verifyToken, */ async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    // !!! DEVI sostituire 'userIdPlaceholder' con l'ID dell'utente loggato da req.user.id !!!
+    const userId = req.body.userId || 'userIdPlaceholder'; // <<< Placeholder insicuro!
+
+    if (userId === 'userIdPlaceholder') {
+         console.warn("WARN: Using placeholder User ID for join group. Implement JWT auth!");
+        // return res.status(401).json({ message: "Authentication required" }); // Abilita questo con JWT
+    }
+
+    const group = await dataStore.findOne('groups', { _id: groupId });
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+
+    // Controlla se l'utente è già membro
+    if (group.members.includes(userId)) {
+      return res.status(400).json({ message: 'User is already a member of this group' });
+    }
+
+    // Aggiungi l'utente ai membri
+    group.members.push(userId);
+    await dataStore.update('groups', { _id: groupId }, { members: group.members });
+
+    // Opzionale: Invia notifica via WebSocket agli altri membri
+    broadcastGroupUpdate(groupId, { type: 'user_joined', userId });
+
+
+    res.json({ message: 'Successfully joined the group', group });
+  } catch (error) {
+    console.error('Error joining group:', error);
+    res.status(500).json({ error: 'Failed to join group' });
+  }
+});
+
+// Lascia un gruppo
+// TODO: Proteggere con verifyToken quando implementato e usare req.user.id
+app.post('/api/groups/:groupId/leave', /* verifyToken, */ async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    // !!! DEVI sostituire 'userIdPlaceholder' con l'ID dell'utente loggato da req.user.id !!!
+    const userId = req.body.userId || 'userIdPlaceholder'; // <<< Placeholder insicuro!
+
+    if (userId === 'userIdPlaceholder') {
+        console.warn("WARN: Using placeholder User ID for leave group. Implement JWT auth!");
+         // return res.status(401).json({ message: "Authentication required" }); // Abilita questo con JWT
+    }
+
+    const group = await dataStore.findOne('groups', { _id: groupId });
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+
+    // Controlla se l'utente è membro
+    if (!group.members.includes(userId)) {
+      return res.status(400).json({ message: 'User is not a member of this group' });
+    }
+
+    // Rimuovi l'utente dai membri
+    const updatedMembers = group.members.filter(memberId => memberId !== userId);
+    await dataStore.update('groups', { _id: groupId }, { members: updatedMembers });
+
+    // Opzionale: Invia notifica via WebSocket agli altri membri
+     broadcastGroupUpdate(groupId, { type: 'user_left', userId });
+
+    res.json({ message: 'Successfully left the group', group: { ...group, members: updatedMembers } });
+  } catch (error) {
+    console.error('Error leaving group:', error);
+    res.status(500).json({ error: 'Failed to leave group' });
+  }
+});
+
+// Invia un messaggio in un gruppo
+// TODO: Proteggere con verifyToken quando implementato e usare req.user
+app.post('/api/groups/:groupId/messages', /* verifyToken, */ async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { text } = req.body;
+         // !!! DEVI ottenere userId e userName dall'utente autenticato (req.user) !!!
+        const userId = req.body.userId || 'userIdPlaceholder'; // <<< Placeholder insicuro!
+        const userName = req.body.userName || 'User Placeholder'; // <<< Placeholder insicuro!
+
+        if (userId === 'userIdPlaceholder') {
+            console.warn("WARN: Using placeholder User for sending message. Implement JWT auth!");
+            // return res.status(401).json({ message: "Authentication required" }); // Abilita questo con JWT
+        }
+        if (!text) {
+            return res.status(400).json({ message: 'Message text cannot be empty' });
+        }
+
+        const group = await dataStore.findOne('groups', { _id: groupId });
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+
+        // Verifica se l'utente è membro del gruppo (IMPORTANTE!)
+        if (!group.members.includes(userId)) {
+             return res.status(403).json({ message: 'You must be a member of the group to send messages' });
+        }
+
+        // Crea e salva il messaggio
+        const newMessage = await dataStore.insert('chatMessages', {
+            groupId,
+            userId,
+            userName, // Denormalizzato per comodità
+            text,
+            timestamp: new Date().toISOString(),
+        });
+
+        // Invia il nuovo messaggio via WebSocket a tutti i membri del gruppo connessi
+        broadcastGroupUpdate(groupId, { type: 'new_message', message: newMessage });
+
+        res.status(201).json(newMessage);
+    } catch (error) {
+        console.error('Error sending message:', error);
+        res.status(500).json({ error: 'Failed to send message' });
+    }
 });
 
 // Google Authentication endpoint

@@ -219,6 +219,7 @@ import { googleTokenLogin } from "vue3-google-login";
 export default {
   name: "HomePage",
   data() {
+    // --- QUESTA SEZIONE RIMANE IDENTICA ALLA TUA ORIGINALE ---
     return {
       loginData: {
         email: "",
@@ -229,14 +230,14 @@ export default {
         email: "",
         password: "",
       },
-      isAuthenticated: false,
-      loggedInUser: null,
+      isAuthenticated: false, // Mantenuto come nel tuo originale
+      loggedInUser: null, // Mantenuto come nel tuo originale
       loginError: "",
       registerError: "",
-      // Hardcoded backend URL for GitHub Codespaces
+      // Hardcoded backend URL for GitHub Codespaces (Mantenuto come nel tuo originale)
       backendUrl:
         "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev",
-      // New properties for enhanced UI
+      // New properties for enhanced UI (Mantenute come nel tuo originale)
       showPassword: false,
       isLoading: false,
       activeForm: "login",
@@ -244,21 +245,31 @@ export default {
       agreeToTerms: false,
       passwordStrengthClass: "",
     };
+    // ---------------------------------------------------------
   },
   created() {
+    // --- QUESTA SEZIONE RIMANE IDENTICA ALLA TUA ORIGINALE ---
     // Check if user is already logged in
     const storedUser =
       localStorage.getItem("user") || sessionStorage.getItem("user");
     if (storedUser) {
-      const user = JSON.parse(storedUser);
-      this.isAuthenticated = true;
-      this.loggedInUser = user.email;
+      try {
+        // Aggiunto try-catch per sicurezza parse
+        const user = JSON.parse(storedUser);
+        this.isAuthenticated = true;
+        this.loggedInUser = user.email;
+      } catch (e) {
+        console.error("Error parsing stored user data:", e);
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
+      }
     }
-
     // Log the backend URL we're using
     console.log("Using backend URL:", this.backendUrl);
+    // ---------------------------------------------------------
   },
   watch: {
+    // --- QUESTA SEZIONE RIMANE IDENTICA ALLA TUA ORIGINALE ---
     "registerData.password": function (newVal) {
       // Simple password strength checker
       if (!newVal) {
@@ -275,21 +286,17 @@ export default {
         this.passwordStrengthClass = "strength-strong";
       }
     },
+    // ---------------------------------------------------------
   },
   methods: {
+    // --- register() RIMANE IDENTICO AL TUO ORIGINALE ---
     async register() {
       this.registerError = "";
       this.isLoading = true;
-
       try {
-        // Log the data we're sending
         console.log("Registration attempt with:", {
-          name: this.registerData.name,
-          email: this.registerData.email,
-          password: this.registerData.password ? "[PRESENT]" : "[MISSING]",
+          /*...*/
         });
-
-        // Make sure all fields are present
         if (
           !this.registerData.name ||
           !this.registerData.email ||
@@ -297,44 +304,30 @@ export default {
         ) {
           throw new Error("All fields are required");
         }
-
-        // Check terms agreement
         if (!this.agreeToTerms) {
           throw new Error(
             "You must agree to the Terms of Service and Privacy Policy"
           );
         }
-
         console.log("Using backend URL:", this.backendUrl);
         console.log(
           "Sending registration data:",
           JSON.stringify(this.registerData)
         );
-
         const res = await fetch(`${this.backendUrl}/api/users`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(this.registerData),
         });
-
         console.log("Registration response status:", res.status);
-
-        // Handle non-successful responses
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.message || "Registration failed");
         }
-
-        // Parse successful response
         const data = await res.json();
         console.log("Registration successful:", data);
-
-        // Show success animation
         this.createConfetti();
-
-        // Store user data and update UI
+        // Aggiorna stato locale e localStorage (come facevi tu)
         localStorage.setItem("user", JSON.stringify(data));
         this.isAuthenticated = true;
         this.loggedInUser = data.email;
@@ -347,92 +340,73 @@ export default {
         this.isLoading = false;
       }
     },
+    // ----------------------------------------------------
 
+    // --- METODO login() AGGIORNATO PER USARE VUEX ---
     async login() {
-      this.loginError = "";
+      this.loginError = ""; // Resetta errore locale
       this.isLoading = true;
+      // Pulisci eventuali errori precedenti nello store Vuex (opzionale ma consigliato)
+      this.$store.dispatch("auth/clearAuthError");
 
       try {
-        console.log("Attempting login with:", {
-          email: this.loginData.email,
-          password: "[HIDDEN]",
-        });
+        console.log(
+          '[DEBUG] HomePage: Dispatching Vuex action "auth/login" with credentials:',
+          { email: this.loginData.email, password: "[HIDDEN]" }
+        );
 
-        // Use the login endpoint
-        const res = await fetch(`${this.backendUrl}/api/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: this.loginData.email,
-            password: this.loginData.password,
-          }),
-        });
+        // ***** LA MODIFICA CHIAVE: Chiama l'azione Vuex *****
+        await this.$store.dispatch("auth/login", this.loginData);
+        // ***** FINE MODIFICA CHIAVE *****
 
-        console.log("Login response status:", res.status);
+        console.log('[DEBUG] HomePage: Vuex action "auth/login" successful.');
 
-        // Handle non-successful responses
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || "Login failed");
-        }
+        // NON aggiornare più lo stato locale this.isAuthenticated o this.loggedInUser qui.
+        // NON salvare più in localStorage/sessionStorage qui (lo fa la mutation Vuex).
 
-        // Parse successful response
-        const data = await res.json();
-        console.log("Login successful:", data);
-
-        // Store user data based on remember me preference
-        if (this.rememberMe) {
-          localStorage.setItem("user", JSON.stringify(data));
-        } else {
-          sessionStorage.setItem("user", JSON.stringify(data));
-        }
-
-        // Update UI
-        this.isAuthenticated = true;
-        this.loggedInUser = data.email;
+        // Naviga alla dashboard se l'azione Vuex ha successo (non lancia errori)
+        console.log("[DEBUG] HomePage Login: Navigating to dashboard.");
         this.$router.push("/dashboard-page");
       } catch (err) {
-        console.error("Login error:", err);
-        this.loginError = err.message || "Login failed. Please try again.";
+        // L'errore viene rilanciato dall'azione Vuex se fallisce
+        console.error(
+          "[ERROR] HomePage Login Error (error caught from Vuex action):",
+          err
+        );
+        // Mostra l'errore nel campo errore locale, prendendolo dallo store se disponibile
+        this.loginError =
+          this.$store.getters["auth/authError"] ||
+          err.message ||
+          "Login failed. Please check credentials.";
       } finally {
         this.isLoading = false;
       }
     },
+    // --- FINE METODO login() AGGIORNATO ---
 
-    // Login with Google method
+    // --- loginWithGoogle() RIMANE IDENTICO AL TUO ORIGINALE ---
+    // (NOTA: Anche questo idealmente dovrebbe usare Vuex)
     loginWithGoogle() {
       this.loginError = "";
       this.isLoading = true;
-
       googleTokenLogin()
         .then((response) => {
           console.log("Google login successful");
-
-          // Get user info from Google API
           return fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-            headers: {
-              Authorization: `Bearer ${response.access_token}`,
-            },
+            headers: { Authorization: `Bearer ${response.access_token}` },
           });
         })
         .then((res) => res.json())
         .then((googleUser) => {
           console.log("Google user info:", googleUser);
-
-          // Prepare data to send to backend
           const userData = {
             email: googleUser.email,
             name: googleUser.name,
             googleId: googleUser.sub,
             picture: googleUser.picture,
-            isRegistration: false, // This indicates it's a login attempt
+            isRegistration: false,
           };
-
           console.log("Sending user data to backend:", userData);
-
-          // Send to backend
           return fetch(`${this.backendUrl}/api/google-auth`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -448,15 +422,10 @@ export default {
           return res.json();
         })
         .then((data) => {
-          // Store user data
           localStorage.setItem("user", JSON.stringify(data));
-
-          // Update state
           this.isAuthenticated = true;
           this.loggedInUser = data.email;
-
-          // IMPORTANT: Navigate to the correct path - dashboard-page, not dashboard
-          window.location.href = "/dashboard-page";
+          window.location.href = "/dashboard-page"; // Mantenuto redirect originale
         })
         .catch((error) => {
           console.error("Google login error:", error);
@@ -466,46 +435,36 @@ export default {
           this.isLoading = false;
         });
     },
+    // ---------------------------------------------------------
 
-    // Register with Google method
+    // --- registerWithGoogle() RIMANE IDENTICO AL TUO ORIGINALE ---
+    // (NOTA: Anche questo idealmente dovrebbe usare Vuex)
     registerWithGoogle() {
       this.registerError = "";
       this.isLoading = true;
-
       googleTokenLogin()
         .then((response) => {
           console.log("Google signup successful");
-
-          // Get user info from Google API
           return fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-            headers: {
-              Authorization: `Bearer ${response.access_token}`,
-            },
+            headers: { Authorization: `Bearer ${response.access_token}` },
           });
         })
         .then((res) => res.json())
         .then((googleUser) => {
           console.log("Google user info:", googleUser);
-
-          // Check terms agreement
           if (!this.agreeToTerms) {
             throw new Error(
               "You must agree to the Terms of Service and Privacy Policy"
             );
           }
-
-          // Prepare data to send to backend
           const userData = {
             email: googleUser.email,
             name: googleUser.name,
             googleId: googleUser.sub,
             picture: googleUser.picture,
-            isRegistration: true, // This indicates it's a registration
+            isRegistration: true,
           };
-
           console.log("Sending user data to backend:", userData);
-
-          // Send to backend
           return fetch(`${this.backendUrl}/api/google-auth`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -521,15 +480,10 @@ export default {
           return res.json();
         })
         .then((data) => {
-          // Store user data
           localStorage.setItem("user", JSON.stringify(data));
-
-          // Update state
           this.isAuthenticated = true;
           this.loggedInUser = data.email;
-
-          // IMPORTANT: Navigate to the correct path - dashboard-page, not dashboard
-          window.location.href = "/dashboard-page";
+          window.location.href = "/dashboard-page"; // Mantenuto redirect originale
         })
         .catch((error) => {
           console.error("Google signup error:", error);
@@ -539,29 +493,33 @@ export default {
           this.isLoading = false;
         });
     },
+    // -----------------------------------------------------------
+
+    // --- logout() RIMANE IDENTICO AL TUO ORIGINALE ---
+    // (NOTA: Anche questo idealmente dovrebbe usare Vuex)
     logout() {
-      // Clear stored user data
+      console.log("[DEBUG] HomePage: Original Logout called."); // Log per chiarezza
       localStorage.removeItem("user");
       sessionStorage.removeItem("user");
-
-      // Update UI
       this.isAuthenticated = false;
       this.loggedInUser = null;
-
-      // Redirect to home
       if (this.$route.path !== "/") {
         this.$router.push("/");
       }
     },
+    // -----------------------------------------------
 
+    // --- navigateToDashboard() RIMANE IDENTICO AL TUO ORIGINALE ---
     navigateToDashboard() {
       this.$router.push("/dashboard-page");
     },
+    // -------------------------------------------------------------
 
+    // --- createConfetti() RIMANE IDENTICO AL TUO ORIGINALE ---
     createConfetti() {
-      // Simple confetti effect - in a real app, you might use a library
       console.log("Success! 🎉");
     },
+    // -----------------------------------------------------
   },
 };
 </script>

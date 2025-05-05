@@ -1,58 +1,109 @@
 {
   "users": [
     {
-      "name": "timaxx",
-      "email": "timaxx@gmail.com",
-      "password": "123123123",
+      "name": "Administrator",
+      "email": "admin@example.com",
+      "password": "admin123",
+      "isAdmin": true,
       "authProvider": "local",
-      "createdAt": "2025-03-21T12:39:43.549Z",
-      "_id": "1742560783549"
+      "createdAt": "2025-05-05T16:06:03.282Z",
+      "_id": "1746461163283"
     },
     {
       "name": "Tymofiy Davydov",
       "email": "davydov.tymofiy14@gmail.com",
       "googleId": "107537169377936167879",
       "picture": "https://lh3.googleusercontent.com/a/ACg8ocKOZZBY4YKNGRr-K-3ZL8vskuZ8T2CQ_Q5D5a1JOAihpvo6aPNz=s96-c",
-      "authProvider": "google",
-      "createdAt": "2025-03-21T12:41:47.640Z",
-      "_id": "1742560907640"
-    },
-    {
-      "name": "Administrator",
-      "email": "admin@example.com",
-      "password": "admin123",
-      "isAdmin": true,
-      "authProvider": "local",
-      "createdAt": "2025-03-21T12:50:59.604Z",
-      "_id": "1742561459604"
-    },
-    {
-      "name": "mama",
-      "email": "mama@gmail.com",
-      "password": "123123",
-      "isAdmin": false,
-      "authProvider": "local",
-      "createdAt": "2025-03-21T17:55:24.973Z",
-      "_id": "1742579724973"
-    },
-    {
-      "name": "World Tanks",
-      "email": "tima.worldoftanks127@gmail.com",
-      "googleId": "107031503458354043488",
-      "picture": "https://lh3.googleusercontent.com/a/ACg8ocKO9Ar0EJgAB_P2kMYuGVGI70Jdhm9Kmj6zJgbgbnx0VjPtlw=s96-c",
       "isAdmin": false,
       "authProvider": "google",
-      "createdAt": "2025-03-21T18:05:25.772Z",
-      "_id": "1742580325772"
+      "createdAt": "2025-05-05T16:34:15.667Z",
+      "_id": "1746462855667"
+    }
+  ],
+  "groups": [
+    {
+      "name": "Prova",
+      "description": "prova ",
+      "createdBy": "1746461163283",
+      "createdAt": "2025-05-05T16:44:52.428Z",
+      "members": [
+        "1746461163283"
+      ],
+      "_id": "1746463492429"
+    }
+  ],
+  "chatMessages": [
+    {
+      "groupId": "1746463492429",
+      "userId": "1746461163283",
+      "userName": "Administrator",
+      "text": "cioaooo",
+      "timestamp": "2025-05-05T16:45:03.075Z",
+      "_id": "1746463503075"
     },
     {
-      "name": "provadata",
-      "email": "provadata@gmail.com",
-      "password": "123123",
-      "isAdmin": false,
-      "authProvider": "local",
-      "createdAt": "2025-03-22T15:52:01.903Z",
-      "_id": "1742658721903"
+      "groupId": "1746463492429",
+      "userId": "1746462855667",
+      "userName": "Tymofiy Davydov",
+      "text": "cioa",
+      "timestamp": "2025-05-05T16:45:33.379Z",
+      "_id": "1746463533379"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746462855667",
+      "userName": "Tymofiy Davydov",
+      "text": "helou",
+      "timestamp": "2025-05-05T17:35:33.811Z",
+      "_id": "1746466533811"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746462855667",
+      "userName": "Tymofiy Davydov",
+      "text": "cioa",
+      "timestamp": "2025-05-05T17:40:56.487Z",
+      "_id": "1746466856487"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746462855667",
+      "userName": "Tymofiy Davydov",
+      "text": "prova1",
+      "timestamp": "2025-05-05T17:41:25.461Z",
+      "_id": "1746466885461"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746461163283",
+      "userName": "Administrator",
+      "text": "ciao",
+      "timestamp": "2025-05-05T17:59:34.202Z",
+      "_id": "1746467974202"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746461163283",
+      "userName": "Administrator",
+      "text": "come va",
+      "timestamp": "2025-05-05T17:59:44.121Z",
+      "_id": "1746467984121"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746462855667",
+      "userName": "Tymofiy Davydov",
+      "text": "ciaooooo",
+      "timestamp": "2025-05-05T18:00:04.949Z",
+      "_id": "1746468004949"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746461163283",
+      "userName": "Administrator",
+      "text": "k,dsifyow8eydfw8or",
+      "timestamp": "2025-05-05T18:00:34.420Z",
+      "_id": "1746468034420"
     }
   ]
 }
