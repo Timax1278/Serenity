@@ -113,6 +113,78 @@
       "text": "auighfpaiusdhfa",
       "timestamp": "2025-05-05T18:06:55.367Z",
       "_id": "1746468415367"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746462855667",
+      "userName": "Tymofiy Davydov",
+      "text": "asmhvas,jc",
+      "timestamp": "2025-05-06T06:09:50.106Z",
+      "_id": "1746511790106"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746461163283",
+      "userName": "Administrator",
+      "text": "asdasd",
+      "timestamp": "2025-05-06T06:09:56.826Z",
+      "_id": "1746511796826"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746461163283",
+      "userName": "Administrator",
+      "text": "asdasd",
+      "timestamp": "2025-05-06T06:10:03.170Z",
+      "_id": "1746511803170"
+    },
+    {
+      "groupId": "1746463492429",
+      "userId": "1746462855667",
+      "userName": "Tymofiy Davydov",
+      "text": "asd",
+      "timestamp": "2025-05-06T06:10:07.814Z",
+      "_id": "1746511807814"
+    }
+  ],
+  "meditations": [
+    {
+      "_id": "1760000000001",
+      "title": "Meditazione Sun",
+      "artist": "Adamaximus",
+      "duration": 120,
+      "genre": "Musica",
+      "filePath": "/music/Meditazione_Sun_-_Adamaximus.mp3",
+      "coverArtUrl": null,
+      "description": "Musica meditativa per il sole interiore."
+    },
+    {
+      "_id": "1750000000002",
+      "title": "Piano Calmante",
+      "artist": "Freesound User",
+      "duration": 240,
+      "genre": "Musica",
+      "filePath": "/music/calm_piano.mp3",
+      "coverArtUrl": null,
+      "description": "Melodia di pianoforte dolce per la concentrazione o il relax."
+    }
+  ],
+  "listenHistory": [
+    {
+      "userId": "1746461163283",
+      "trackId": "1760000000001",
+      "genre": "Musica",
+      "completed": true,
+      "timestamp": "2025-05-06T06:47:12.033Z",
+      "_id": "1746514032033"
+    },
+    {
+      "userId": "1746461163283",
+      "trackId": "777132",
+      "genre": "Bass",
+      "completed": true,
+      "timestamp": "2025-05-06T18:08:16.602Z",
+      "_id": "1746554896602"
     }
   ]
 }

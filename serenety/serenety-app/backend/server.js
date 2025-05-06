@@ -1,65 +1,67 @@
+// backend/server.js
+// --- PRIMISSIMA RIGA DEVE ESSERE QUESTA ---
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+// ----------------------------------------
+
+// --- LOG DI DEBUG DOTENV ---
+console.log('------------------------------------');
+console.log('[DEBUG DOTENV] Attempted to load .env from:', path.resolve(__dirname, '.env'));
+const FREESOUND_API_KEY_FROM_ENV = process.env.FREESOUND_API_KEY;
+console.log('[DEBUG DOTENV] Value for FREESOUND_API_KEY immediately after load:', FREESOUND_API_KEY_FROM_ENV ? '****** (Loaded)' : '<<<<< UNDEFINED or EMPTY >>>>>');
+console.log('------------------------------------');
+// -------------------------
+
+// --- Altri Require ---
 const express = require('express');
 const fs = require('fs').promises;
-const path = require('path');
+// const path = require('path'); // Già importato
 const cors = require('cors');
 const { OAuth2Client } = require('google-auth-library');
 const http = require('http');
 const WebSocket = require('ws');
+const axios = require('axios');
+// ---------------------
 
-// Initialize Express app first
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5000; // Ora PORT può essere caricato da .env
 
-// Now create the HTTP server using the app
 const server = http.createServer(app);
-
-// Create WebSocket server
 const wss = new WebSocket.Server({ server });
 
-// Track connected clients
 const clients = new Set();
-
-// Track visitor count
 let visitorCount = 0;
+const clientGroupSubscriptions = new Map();
 
-// Google OAuth client - Usa la variabile d'ambiente o un valore predefinito per test
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'YOUR-CLIENT-ID-HERE.apps.googleusercontent.com';
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// Setup middleware
 app.use(express.json());
+app.use(cors({ origin: true, credentials: true }));
 
-// Configure CORS to accept requests from any origin in development
-app.use(cors({
-  origin: true, // Allow all origins in development
-  credentials: true
-}));
-
-// Create a simple data store
 const dataStore = {
   data: {},
-  
   async load() {
     try {
       const filePath = path.join(__dirname, 'data.json');
       const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
-  
       if (fileExists) {
-        const data = await fs.readFile(filePath, 'utf8');
-        this.data = JSON.parse(data);
+        const dataContent = await fs.readFile(filePath, 'utf8');
+        this.data = JSON.parse(dataContent);
         console.log('Data loaded from file');
-        // Assicura che le nuove collezioni esistano
+        if (!this.data.users) this.data.users = [];
         if (!this.data.groups) this.data.groups = [];
         if (!this.data.chatMessages) this.data.chatMessages = [];
+        if (!this.data.meditations) this.data.meditations = []; // Per dati locali se servono
+        if (!this.data.listenHistory) this.data.listenHistory = [];
       } else {
         console.log('No existing data file, creating a new one');
-        // Inizializza con tutte le collezioni necessarie
-        this.data = { users: [], groups: [], chatMessages: [] };
+        this.data = { users: [], groups: [], chatMessages: [], meditations: [], listenHistory: [] };
         await this.save();
       }
     } catch (error) {
-      console.log('Error reading file, starting with empty data store:', error.message);
-      this.data = { users: [], groups: [], chatMessages: [] };
+      console.error('Error reading data.json, starting with empty data store:', error.message);
+      this.data = { users: [], groups: [], chatMessages: [], meditations: [], listenHistory: [] };
       await this.save();
     }
   },
@@ -147,9 +149,6 @@ function broadcastVisitorCount() {
     }
   }
 }
-
-// Mappa per tracciare a quale gruppo ogni client WebSocket è interessato
-const clientGroupSubscriptions = new Map(); // ws -> groupId
 
 // server.js
 
@@ -683,51 +682,110 @@ app.post('/api/groups/:groupId/leave', /* verifyToken, */ async (req, res) => {
   }
 });
 
-// Invia un messaggio in un gruppo
-// TODO: Proteggere con verifyToken quando implementato e usare req.user
-app.post('/api/groups/:groupId/messages', /* verifyToken, */ async (req, res) => {
-    try {
-        const { groupId } = req.params;
-        const { text } = req.body;
-         // !!! DEVI ottenere userId e userName dall'utente autenticato (req.user) !!!
-        const userId = req.body.userId || 'userIdPlaceholder'; // <<< Placeholder insicuro!
-        const userName = req.body.userName || 'User Placeholder'; // <<< Placeholder insicuro!
+// --- Endpoint Meditazione ---
 
-        if (userId === 'userIdPlaceholder') {
-            console.warn("WARN: Using placeholder User for sending message. Implement JWT auth!");
-            // return res.status(401).json({ message: "Authentication required" }); // Abilita questo con JWT
-        }
-        if (!text) {
-            return res.status(400).json({ message: 'Message text cannot be empty' });
-        }
+// La rotta /api/meditations/genres ora legge da dataStore.meditations,
+// che non viene più popolato se tutte le tracce arrivano da Freesound.
+// Questa rotta andrà ripensata se si vogliono "generi" derivati dai tag di Freesound.
+app.get('/api/meditations/genres', async (req, res) => {
+  try {
+      console.log(`[API Meditations] Fetching unique genres from dataStore (may be empty if using Freesound).`);
+      const meditations = await dataStore.find('meditations');
+      const genres = [...new Set(meditations.map(m => m.genre).flat())];
+      const validGenres = genres.filter(g => g);
+      console.log(`[API Meditations] Sending unique genres from dataStore:`, validGenres);
+      res.json(validGenres);
+  } catch (error) {
+       console.error('[ERROR] Error fetching genres:', error);
+       res.status(500).json({ error: 'Failed to fetch genres' });
+  }
+});
 
-        const group = await dataStore.findOne('groups', { _id: groupId });
-        if (!group) {
-            return res.status(404).json({ message: 'Group not found' });
-        }
+app.post('/api/meditations/history', async (req, res) => {
+const userId = req.body.userId || 'userIdPlaceholder';
+const { trackId, genre, completed } = req.body;
+if (userId === 'userIdPlaceholder') { console.warn("WARN: Using placeholder User ID for listen history."); }
+if (!trackId || !genre) { return res.status(400).json({ message: 'Track ID and genre are required for history.' }); }
+try {
+    console.log(`[API History] Recording listen for User: ${userId}, Track: ${trackId}, Genre: ${genre}`);
+    await dataStore.insert('listenHistory', { userId, trackId, genre, completed: completed || false, timestamp: new Date().toISOString() });
+    res.status(201).json({ message: 'Listen recorded' });
+} catch (error) {
+    console.error('[ERROR] Failed to record listen history:', error);
+    res.status(500).json({ error: 'Failed to record listen history' });
+}
+});
 
-        // Verifica se l'utente è membro del gruppo (IMPORTANTE!)
-        if (!group.members.includes(userId)) {
-             return res.status(403).json({ message: 'You must be a member of the group to send messages' });
-        }
+// --- ROTTA /api/meditations CHE CHIAMA FREESOUND ---
+app.get('/api/meditations', async (req, res) => {
+// Leggi la chiave API DENTRO la rotta per essere sicuro
+const apiKey = process.env.FREESOUND_API_KEY;
 
-        // Crea e salva il messaggio
-        const newMessage = await dataStore.insert('chatMessages', {
-            groupId,
-            userId,
-            userName, // Denormalizzato per comodità
-            text,
-            timestamp: new Date().toISOString(),
-        });
+console.log('------------------------------------');
+console.log('[DEBUG /api/meditations] Checking API Key INSIDE route handler.');
+console.log('[DEBUG /api/meditations] Value for apiKey:', apiKey ? '****** (KEY FOUND)' : '<<<<< KEY IS UNDEFINED or EMPTY >>>>>');
+console.log('------------------------------------');
 
-        // Invia il nuovo messaggio via WebSocket a tutti i membri del gruppo connessi
-        broadcastGroupUpdate(groupId, { type: 'new_message', message: newMessage });
+if (!apiKey) {
+  console.error("[FATAL ERROR Freesound] API Key is missing or empty INSIDE /api/meditations route handler!");
+  return res.status(500).json({ error: 'Internal Server Error: API Key configuration issue preventing Freesound call.' });
+}
 
-        res.status(201).json(newMessage);
-    } catch (error) {
-        console.error('Error sending message:', error);
-        res.status(500).json({ error: 'Failed to send message' });
+const query = req.query.query || "nature ambient"; // Aggiunti termini
+const genreFilter = req.query.genre; // Questo è un TAG per Freesound
+const page = req.query.page || 1;
+const pageSize = 15; // Freesound potrebbe avere un max per pagina, controlla documentazione
+const licenseFilter = "license:\"Creative Commons 0\" OR license:\"Attribution\""; // Licenze permissive
+let searchQuery = `${query} ${licenseFilter}`;
+if (genreFilter) {
+    searchQuery = `tag:${genreFilter} ${licenseFilter}`;
+    console.log(`[API Freesound] Searching by tag: ${genreFilter}`);
+} else {
+     console.log(`[API Freesound] Searching by base query: ${query}`);
+}
+const fields = "id,name,username,duration,tags,previews,images,description,license,analysis"; // Aggiunto analysis per info extra
+const freesoundUrl = `https://freesound.org/apiv2/search/text/`;
+
+try {
+  console.log(`[API Freesound] Calling Freesound API: URL=${freesoundUrl}, Page=${page}, Query="${searchQuery}"`);
+  const response = await axios.get(freesoundUrl, {
+    headers: { 'Authorization': `Token ${apiKey}` },
+    params: { query: searchQuery, page: page, page_size: pageSize, fields: fields, sort: "created_desc" } // Ordina per più recenti
+  });
+  console.log(`[API Freesound] Received ${response.data.results?.length || 0} results from Freesound.`);
+
+  const mappedMeditations = response.data.results.map(sound => ({
+    _id: String(sound.id),
+    title: (sound.name || 'Untitled Sound').substring(0, 70), // Limita lunghezza titolo
+    artist: sound.username || 'Unknown Artist',
+    duration: Math.round(sound.duration || 0),
+    genre: sound.tags && sound.tags.length > 0 ? (sound.tags[0].charAt(0).toUpperCase() + sound.tags[0].slice(1)) : 'General', // Primo tag come genere
+    tags: sound.tags || [],
+    filePath: sound.previews?.['preview-hq-mp3'] || null, // Usa anteprima HQ MP3
+    coverArtUrl: sound.images?.['waveform_m'] || null, // Waveform media come cover
+    description: (sound.description || '').substring(0, 200), // Limita descrizione
+    license: sound.license || null
+  })).filter(track => track.filePath); // Filtra solo tracce con un link di anteprima valido
+
+  console.log(`[API Freesound] Sending ${mappedMeditations.length} mapped tracks to frontend.`);
+  res.json(mappedMeditations);
+
+} catch (error) {
+    console.error("==============================================");
+    console.error("[ERROR Freesound API Call] Failed inside /api/meditations route:");
+    if (error.response) {
+        console.error("  Freesound Status:", error.response.status);
+        console.error("  Freesound Headers:", JSON.stringify(error.response.headers, null, 2));
+        console.error("  Freesound Data:", JSON.stringify(error.response.data, null, 2));
+    } else if (error.request) {
+        console.error("  No response received from Freesound:", error.request);
+    } else {
+        console.error("  Error setting up Freesound request or other JS error:", error.message);
     }
+    console.error("  Full Axios Error Object:", error.toJSON ? JSON.stringify(error.toJSON(), null, 2) : error);
+    console.error("==============================================");
+    res.status(500).json({ error: 'Failed to fetch meditations from external source. Check server logs for details.' });
+}
 });
 
 // Google Authentication endpoint
