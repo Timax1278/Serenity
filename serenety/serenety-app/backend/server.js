@@ -1035,6 +1035,315 @@ app.post('/api/admin/create-admin', requireAdmin, async (req, res) => {
   }
 });
 
+// backend/server.js
+
+// --- API Admin: Gestione Servizi ---
+app.post('/api/admin/services', requireAdmin, async (req, res) => {
+  try {
+      const { name, description, targetAudience, tags, associatedProfessionalIds, defaultDuration } = req.body;
+      if (!name || !description) { return res.status(400).json({ message: 'Name and description are required for service' }); }
+      const newService = await dataStore.insert('services', {
+          name, description, targetAudience, tags: tags || [], associatedProfessionalIds: associatedProfessionalIds || [], defaultDuration
+      });
+      res.status(201).json(newService);
+  } catch (error) { res.status(500).json({ error: 'Failed to create service' }); }
+});
+
+app.put('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+  try {
+       const { serviceId } = req.params;
+       const updateData = req.body; // Prendi tutti i campi da aggiornare
+       // Rimuovi _id dal corpo se presente per evitare conflitti
+       delete updateData._id;
+       const result = await dataStore.update('services', { _id: serviceId }, updateData);
+       if (result.modifiedCount === 0) return res.status(404).json({ message: 'Service not found or no changes made' });
+       const updatedService = await dataStore.findOne('services', { _id: serviceId });
+       res.json(updatedService);
+  } catch (error) { res.status(500).json({ error: 'Failed to update service' }); }
+});
+
+app.delete('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+   try {
+      const { serviceId } = req.params;
+      const result = await dataStore.delete('services', { _id: serviceId });
+       if (result.deletedCount === 0) return res.status(404).json({ message: 'Service not found' });
+       // Potresti voler rimuovere questo serviceId dagli array offeredServiceIds dei professionisti
+       res.json({ message: 'Service deleted successfully', deletedServiceId: serviceId });
+   } catch (error) { res.status(500).json({ error: 'Failed to delete service' }); }
+});
+
+// GET per vedere tutti i servizi (utile per admin)
+app.get('/api/admin/services', requireAdmin, async (req, res) => {
+  try {
+      const services = await dataStore.find('services');
+      res.json(services);
+  } catch (error) { res.status(500).json({ error: 'Failed to fetch services for admin' }); }
+});
+
+
+// --- API Admin: Gestione Professionisti ---
+app.post('/api/admin/professionals', requireAdmin, async (req, res) => {
+  try {
+      const { name, specialization, bio, profileImageUrl, offeredServiceIds } = req.body;
+       if (!name || !specialization) { return res.status(400).json({ message: 'Name and specialization are required' }); }
+       const newProf = await dataStore.insert('professionals', {
+           name, specialization, bio, profileImageUrl, offeredServiceIds: offeredServiceIds || []
+       });
+       res.status(201).json(newProf);
+  } catch (error) { res.status(500).json({ error: 'Failed to create professional' }); }
+});
+
+app.put('/api/admin/professionals/:profId', requireAdmin, async (req, res) => {
+   try {
+       const { profId } = req.params;
+       const updateData = req.body;
+       delete updateData._id;
+       const result = await dataStore.update('professionals', { _id: profId }, updateData);
+        if (result.modifiedCount === 0) return res.status(404).json({ message: 'Professional not found or no changes made' });
+        const updatedProf = await dataStore.findOne('professionals', { _id: profId });
+        res.json(updatedProf);
+   } catch (error) { res.status(500).json({ error: 'Failed to update professional' }); }
+});
+
+app.delete('/api/admin/professionals/:profId', requireAdmin, async (req, res) => {
+    try {
+       const { profId } = req.params;
+       const result = await dataStore.delete('professionals', { _id: profId });
+        if (result.deletedCount === 0) return res.status(404).json({ message: 'Professional not found' });
+        // Potresti voler rimuovere questo profId dagli array associatedProfessionalIds dei servizi
+        res.json({ message: 'Professional deleted successfully', deletedProfId: profId });
+    } catch (error) { res.status(500).json({ error: 'Failed to delete professional' }); }
+});
+
+// GET per vedere tutti i professionisti (utile per admin)
+app.get('/api/admin/professionals', requireAdmin, async (req, res) => {
+   try {
+       const professionals = await dataStore.find('professionals');
+       res.json(professionals);
+   } catch (error) { res.status(500).json({ error: 'Failed to fetch professionals for admin' }); }
+});
+
+// backend/server.js
+
+// GET /api/services - Ottiene tutti i servizi con i dettagli dei professionisti associati
+// TODO: Proteggere con verifyToken se necessario
+app.get('/api/services', async (req, res) => {
+  try {
+      const services = await dataStore.find('services');
+      const professionals = await dataStore.find('professionals'); // Carica tutti i professionisti
+
+      // Mappa per accesso rapido ai professionisti per ID
+      const professionalsMap = new Map(professionals.map(p => [p._id, p]));
+
+      // "Popola" i professionisti associati per ogni servizio
+      const populatedServices = services.map(service => {
+          const associatedProfessionals = (service.associatedProfessionalIds || [])
+              .map(profId => professionalsMap.get(profId)) // Trova l'oggetto professionista
+              .filter(prof => prof); // Rimuovi eventuali ID non trovati
+
+           // Restituisci solo i dati necessari dei professionisti per la card servizio
+          const professionalsSummary = associatedProfessionals.map(prof => ({
+              _id: prof._id,
+              name: prof.name,
+              specialization: prof.specialization
+          }));
+
+          return {
+              ...service,
+              professionals: professionalsSummary // Sostituisci l'array di ID con oggetti riassuntivi
+          };
+      });
+
+      res.json(populatedServices);
+  } catch (error) {
+       console.error("[ERROR] Failed to fetch populated services:", error);
+       res.status(500).json({ error: 'Failed to fetch services' });
+  }
+});
+
+
+// backend/server.js
+
+// Funzione Helper (metti prima delle rotte che la usano)
+function generateSlots(startTime, endTime, slotDurationMinutes) {
+  const slots = [];
+  const [startH, startM] = startTime.split(':').map(Number);
+  const [endH, endM] = endTime.split(':').map(Number);
+  let currentH = startH; let currentM = startM;
+  while (currentH * 60 + currentM < endH * 60 + endM) {
+      const slotTime = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
+      slots.push(slotTime);
+      currentM += slotDurationMinutes;
+      currentH += Math.floor(currentM / 60);
+      currentM %= 60;
+      if (currentH * 60 + currentM + slotDurationMinutes > endH * 60 + endM) {
+           if(currentH * 60 + currentM <= endH * 60 + endM){}
+           break;
+      }
+  }
+  return slots;
+}
+
+
+// Rotta API per la Disponibilità (metti prima di server.listen)
+// GET /api/availability/:professionalId?date=YYYY-MM-DD
+app.get('/api/availability/:professionalId', async (req, res) => { // Rimosso commento verifyToken per ora
+  const { professionalId } = req.params;
+  const requestedDateStr = req.query.date;
+
+  if (!requestedDateStr || !/^\d{4}-\d{2}-\d{2}$/.test(requestedDateStr)) { // Aggiunto check formato YYYY-MM-DD
+      return res.status(400).json({ message: 'Valid date query parameter (YYYY-MM-DD) is required.' });
+  }
+
+  let requestedDate;
+  try {
+      requestedDate = new Date(requestedDateStr + 'T00:00:00Z');
+      if (isNaN(requestedDate.getTime())) throw new Error('Invalid Date Object');
+  } catch (e) {
+       return res.status(400).json({ message: 'Invalid date value.' });
+  }
+
+  const dayOfWeek = requestedDate.getUTCDay();
+
+  console.log(`[API Availability] Checking for Prof: ${professionalId}, Date: ${requestedDateStr}, DayOfWeek: ${dayOfWeek}`);
+
+  try {
+      const potentialAvailabilityBlocks = await dataStore.find('availabilities', { professionalId: String(professionalId), dayOfWeek }); // Assicura che ID sia stringa se necessario
+      console.log(`[API Availability] Found ${potentialAvailabilityBlocks.length} potential availability blocks.`);
+
+      const existingAppointments = await dataStore.find('appointments', { professionalId: String(professionalId), date: requestedDateStr });
+      const bookedSlots = new Set(existingAppointments.map(app => app.time));
+      console.log(`[API Availability] Found ${existingAppointments.length} existing appointments on ${requestedDateStr}. Booked slots:`, bookedSlots);
+
+      let availableSlots = [];
+      for (const block of potentialAvailabilityBlocks) {
+          // Assicurati che slotDurationMinutes esista e sia un numero > 0
+          const duration = block.slotDurationMinutes && block.slotDurationMinutes > 0 ? block.slotDurationMinutes : 60; // Default a 60 min se mancante/invalido
+          const slotsInBlock = generateSlots(block.startTime, block.endTime, duration);
+          console.log(`[API Availability] Generating slots for block ${block._id} (${block.startTime}-${block.endTime}, ${duration}min):`, slotsInBlock);
+          const freeSlotsInBlock = slotsInBlock.filter(slot => !bookedSlots.has(slot));
+          console.log(`[API Availability] Free slots in block ${block._id}:`, freeSlotsInBlock);
+          availableSlots = availableSlots.concat(freeSlotsInBlock);
+      }
+
+      availableSlots = [...new Set(availableSlots)].sort();
+
+       console.log(`[API Availability] Final available slots for ${requestedDateStr}:`, availableSlots);
+      res.json(availableSlots);
+
+  } catch (error) {
+       console.error('[ERROR] Failed to get availability:', error);
+       res.status(500).json({ error: 'Failed to retrieve availability' });
+  }
+});
+
+// backend/server.js
+
+// ... (dopo le altre API) ...
+app.post('/api/appointments', async (req, res) => {
+  // !!! USA req.user.id dal token JWT al posto di req.body.userId !!!
+  const userId = req.body.userId || 'placeholderUserId-' + Date.now(); // Usa placeholder diverso se non loggato/test
+  const { professionalId, serviceId, date, time } = req.body;
+
+  if (!professionalId || !serviceId || !date || !time) {
+      return res.status(400).json({ message: 'Missing required booking information (professionalId, serviceId, date, time).' });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+       return res.status(400).json({ message: 'Invalid date (YYYY-MM-DD) or time (HH:MM) format.' });
+  }
+
+  console.log(`[API POST Appointment] Received booking request for User: ${userId}`, req.body);
+
+  try {
+      // Controllo Disponibilità (Anti-Race Condition)
+      let requestedDate;
+      try { requestedDate = new Date(date + 'T00:00:00Z'); if(isNaN(requestedDate.getTime())) throw new Error();} catch { return res.status(400).json({message:'Invalid date value.'});}
+      const dayOfWeek = requestedDate.getUTCDay();
+      const potentialBlocks = await dataStore.find('availabilities', { professionalId: String(professionalId), dayOfWeek });
+
+      if (potentialBlocks.length === 0) { return res.status(409).json({ message: 'Professional not available on the selected day.' }); }
+
+      let isSlotWithinBlock = false; let slotDuration = 60;
+      for (const block of potentialBlocks) {
+           const duration = block.slotDurationMinutes && block.slotDurationMinutes > 0 ? block.slotDurationMinutes : 60;
+           const blockSlots = generateSlots(block.startTime, block.endTime, duration);
+           if (blockSlots.includes(time)) { isSlotWithinBlock = true; slotDuration = duration; break; }
+      }
+      if (!isSlotWithinBlock) { return res.status(409).json({ message: 'Selected time slot is outside available hours.' }); }
+
+      const existingAppointment = await dataStore.findOne('appointments', { professionalId: String(professionalId), date: date, time: time });
+      if (existingAppointment) { return res.status(409).json({ message: 'Sorry, this time slot was just booked.' }); }
+
+      console.log(`[API POST Appointment] Slot available. Creating appointment...`);
+      const service = await dataStore.findOne('services', { _id: serviceId });
+      const professional = await dataStore.findOne('professionals', { _id: professionalId });
+
+      const newAppointment = await dataStore.insert('appointments', {
+          userId, professionalId, serviceId, date, time,
+          durationMinutes: service?.defaultDuration || slotDuration,
+          serviceName: service?.name || 'Unknown Service',
+          professionalName: professional?.name || 'Unknown Professional',
+          status: 'confirmed',
+          createdAt: new Date().toISOString()
+      });
+
+      console.log(`[API POST Appointment] Appointment created successfully:`, newAppointment._id);
+      res.status(201).json(newAppointment);
+
+  } catch (error) {
+      console.error('[ERROR] Failed to create appointment:', error);
+      res.status(500).json({ error: 'Failed to book appointment due to a server error.' });
+  }
+});
+
+// GET /api/appointments?userId=... - Recupera appuntamenti per un utente
+app.get('/api/appointments', async (req, res) => {
+  const userId = req.query.userId || 'placeholderUserId-' + Date.now(); // <-- USA req.user.id DA TOKEN!
+
+  if (!userId || userId.startsWith('placeholderUserId')) { // Modificato controllo per placeholder
+      console.warn('[API GET Appointments] Attempted fetch without valid User ID.');
+      return res.status(401).json({ message: 'Authentication required to view appointments.' }); // Cambiato in 401
+  }
+
+  console.log(`[API GET Appointments] Fetching appointments for User ID: ${userId}`);
+  try {
+      const userAppointments = await dataStore.find('appointments', { userId: userId });
+      userAppointments.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+      console.log(`[API GET Appointments] Found ${userAppointments.length} appointments for User ID: ${userId}`);
+      res.json(userAppointments);
+  } catch (error) {
+      console.error(`[ERROR] Failed to fetch appointments for User ID ${userId}:`, error);
+      res.status(500).json({ error: 'Failed to retrieve appointments.' });
+  }
+});
+
+// DELETE /api/appointments/:appointmentId - Cancella un appuntamento
+app.delete('/api/appointments/:appointmentId', async (req, res) => {
+  const { appointmentId } = req.params;
+  const userIdMakingRequest = 'placeholderUserId-' + Date.now(); // <-- USA req.user.id DA TOKEN!
+
+  console.log(`[API DELETE Appointment] Request by ${userIdMakingRequest} to delete appointment ID: ${appointmentId}`);
+  try {
+      const appointment = await dataStore.findOne('appointments', { _id: appointmentId });
+      if (!appointment) { return res.status(404).json({ message: 'Appointment not found.' }); }
+
+      // !!! CONTROLLO PROPRIETARIO FONDAMENTALE (da abilitare con JWT) !!!
+      // if (appointment.userId !== userIdMakingRequest) {
+      //     return res.status(403).json({ message: 'You are not authorized to cancel this appointment.' });
+      // }
+      console.warn(`[API DELETE Appointment] SECURITY TODO: Implement ownership check!`);
+
+      const result = await dataStore.delete('appointments', { _id: appointmentId });
+      if (result.deletedCount === 0) { return res.status(500).json({ message: 'Failed to cancel appointment (delete operation failed).' });}
+
+      console.log(`[API DELETE Appointment] Appointment ${appointmentId} cancelled successfully.`);
+      res.status(200).json({ message: 'Appointment cancelled successfully.', cancelledAppointmentId: appointmentId });
+  } catch (error) {
+      console.error(`[ERROR] Failed to cancel appointment ${appointmentId}:`, error);
+      res.status(500).json({ error: 'Failed to cancel appointment.' });
+  }
+});
+
 // Google authentication endpoint (semplice - accetta dati dal client)
 app.post('/api/google-auth-simple', async (req, res) => {
   try {

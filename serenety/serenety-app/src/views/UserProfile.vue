@@ -13,27 +13,30 @@
     <h1 class="typewriter">Your Profile</h1>
     <p>Manage your personal information and account settings.</p>
 
+    <!-- SEZIONE PROFILO UTENTE -->
     <div class="profile-container glass">
-      <div v-if="isLoading" class="loading-overlay">
+      <!-- Indicatore di caricamento per i dati del profilo -->
+      <div v-if="isLoadingProfile" class="loading-overlay">
         <div class="spinner"></div>
       </div>
 
-      <div v-if="!isEditing" class="profile-view">
+      <!-- Vista Profilo (non in modifica) -->
+      <div v-if="!isEditing && user" class="profile-view">
         <div class="profile-header">
           <div class="profile-avatar">
             <img
               :src="
                 user.picture ||
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  user.name
-                )}&background=random`
+                  user.name || 'User'
+                )}&background=random&color=fff`
               "
               alt="Profile picture"
             />
           </div>
           <div class="profile-info">
-            <h2>{{ user.name }}</h2>
-            <p class="joined-date">
+            <h2>{{ user.name || "User Name" }}</h2>
+            <p class="joined-date" v-if="user.createdAt">
               Member since {{ formatDate(user.createdAt) }}
             </p>
           </div>
@@ -45,7 +48,7 @@
         <div class="profile-details">
           <div class="detail-item">
             <div class="detail-label">Email</div>
-            <div class="detail-value">{{ user.email }}</div>
+            <div class="detail-value">{{ user.email || "N/A" }}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">Authentication Method</div>
@@ -80,9 +83,13 @@
         </div>
       </div>
 
-      <form v-else @submit.prevent="updateProfile" class="profile-edit-form">
+      <!-- Form Modifica Profilo -->
+      <form
+        v-else-if="isEditing && user"
+        @submit.prevent="handleUpdateProfile"
+        class="profile-edit-form"
+      >
         <h2>Edit Your Profile</h2>
-
         <div class="float-label input-icon name">
           <input
             type="text"
@@ -93,7 +100,6 @@
           />
           <label>Full Name</label>
         </div>
-
         <div
           class="float-label input-icon email"
           v-if="user.authProvider === 'local'"
@@ -107,18 +113,18 @@
           />
           <label>Email Address</label>
           <p class="field-note">
-            Changing your email will require you to login again.
+            Changing your email may require re-login on next session if not
+            handled by server token.
           </p>
         </div>
-
         <div v-if="user.authProvider === 'local'">
           <div class="password-section">
             <h3>Change Password</h3>
             <p class="section-note">
-              Leave blank if you don't want to change your password
+              Leave current and new password blank if you don't want to change
+              it.
             </p>
           </div>
-
           <div class="float-label input-icon password">
             <input
               :type="showPassword ? 'text' : 'password'"
@@ -131,7 +137,6 @@
               👁️
             </div>
           </div>
-
           <div class="float-label input-icon password">
             <input
               :type="showPassword ? 'text' : 'password'"
@@ -141,7 +146,6 @@
             />
             <label>New Password</label>
           </div>
-
           <div
             class="password-strength"
             :class="passwordStrengthClass"
@@ -150,26 +154,89 @@
             <div class="password-strength-bar"></div>
           </div>
         </div>
-
         <div class="form-actions">
           <button type="button" @click="cancelEditing" class="cancel-button">
             Cancel
           </button>
-          <button type="submit" :class="{ loading: isSubmitting }">
-            Save Changes
+          <button type="submit" :class="{ loading: isSubmittingProfile }">
+            {{ isSubmittingProfile ? "Saving..." : "Save Changes" }}
           </button>
         </div>
-
-        <p v-if="updateError" class="error shake">{{ updateError }}</p>
-        <p v-if="updateSuccess" class="success">{{ updateSuccess }}</p>
+        <p v-if="updateProfileError" class="error shake">
+          {{ updateProfileError }}
+        </p>
+        <p v-if="updateProfileSuccess" class="success">
+          {{ updateProfileSuccess }}
+        </p>
       </form>
+      <!-- Messaggio se utente non trovato -->
+      <div v-if="!isLoadingProfile && !user" class="error-message">
+        Could not load user profile. Please try logging in again.
+      </div>
     </div>
+    <!-- FINE SEZIONE PROFILO -->
 
+    <!-- SEZIONE APPUNTAMENTI -->
+    <div class="appointments-section glass">
+      <h2>Your Upcoming Appointments</h2>
+      <div v-if="isLoadingAppointments" class="loading-indicator small">
+        Loading your appointments...
+      </div>
+      <div
+        v-if="appointmentsError && !isLoadingAppointments"
+        class="error-message small"
+      >
+        Failed to load appointments: {{ appointmentsError }}
+        <button @click="fetchUserAppointmentsAction" class="retry-button">
+          Retry
+        </button>
+      </div>
+
+      <ul
+        v-if="
+          !isLoadingAppointments &&
+          userAppointments &&
+          userAppointments.length > 0
+        "
+        class="appointment-list"
+      >
+        <li
+          v-for="app in userAppointments"
+          :key="app._id"
+          class="appointment-item"
+        >
+          <div>
+            <strong>{{ app.serviceName }}</strong> with
+            {{ app.professionalName }}
+          </div>
+          <div>On: {{ formatDate(app.date) }} at {{ app.time }}</div>
+          <button
+            v-if="isFutureAppointment(app.date, app.time)"
+            @click="handleCancelAppointment(app._id)"
+            class="cancel-button"
+            :disabled="isCancelling === app._id || isBookingLoadingAppointments"
+          >
+            {{
+              isCancelling === app._id && isBookingLoadingAppointments
+                ? "Cancelling..."
+                : "Cancel"
+            }}
+          </button>
+          <span v-else class="past-appointment">(Past Appointment)</span>
+        </li>
+      </ul>
+      <p v-else-if="!isLoadingAppointments && !appointmentsError">
+        You have no upcoming appointments scheduled.
+      </p>
+    </div>
+    <!-- FINE SEZIONE APPUNTAMENTI -->
+
+    <!-- Pannello Azioni Inferiore -->
     <div class="actions-panel">
       <button @click="$router.push('/dashboard-page')" class="back-button">
         <span class="icon">←</span> Back to Dashboard
       </button>
-      <button @click="logout" class="logout-button">Logout</button>
+      <button @click="handleLogout" class="logout-button">Logout</button>
     </div>
 
     <!-- Version badge -->
@@ -178,42 +245,68 @@
 </template>
 
 <script>
+// Importa mapState, mapGetters, mapActions da Vuex
+import { mapGetters, mapActions } from "vuex";
+
 export default {
   name: "UserProfile",
   data() {
     return {
+      // Stato locale per i dati del profilo utente (caricati da localStorage/API)
       user: {
         _id: "",
         name: "",
         email: "",
-        authProvider: "local",
+        authProvider: "local", // Default, verrà sovrascritto
         createdAt: "",
         picture: "",
         isAdmin: false,
       },
+      // Stato locale per il form di modifica profilo
       editedUser: {
         name: "",
         email: "",
         currentPassword: "",
         newPassword: "",
       },
-      isEditing: false,
-      isLoading: true,
-      isSubmitting: false,
+      isEditing: false, // Controlla se la UI è in modalità modifica
+      isLoadingProfile: true, // Flag per caricamento dati profilo
+      isSubmittingProfile: false, // Flag per salvataggio modifiche profilo
       showPassword: false,
-      updateError: "",
-      updateSuccess: "",
+      updateProfileError: "", // Errore specifico per update profilo
+      updateProfileSuccess: "", // Messaggio successo per update profilo
       passwordStrengthClass: "",
+      // Mantenuto se usi ancora fetch diretto per il profilo, altrimenti non serve
       backendUrl:
         "https://fuzzy-space-yodel-694rv596xpjrc4jr9-5000.app.github.dev",
+      isCancelling: null, // ID dell'appuntamento in corso di cancellazione (stato UI locale)
     };
   },
+  computed: {
+    // Mappa i getter dallo store 'auth'
+    // L'utente autenticato dovrebbe idealmente provenire sempre da qui
+    ...mapGetters("auth", {
+      vuexUser: "currentUser", // L'oggetto utente dallo store
+      isUserAdmin: "isAdmin", // Flag admin dallo store
+    }),
+
+    // Mappa i getter dallo store 'appointments'
+    ...mapGetters("appointments", {
+      userAppointments: "getUserAppointments", // Lista appuntamenti
+      isLoadingAppointments: "isLoading", // Flag caricamento lista appuntamenti
+      appointmentsError: "getError", // Errore caricamento lista appuntamenti
+      isBookingLoadingAppointments: "isBookingLoading", // Flag caricamento azione booking/cancel
+    }),
+  },
   created() {
+    // Carica il profilo utente quando il componente viene creato
     this.loadUserProfile();
+    // Carica gli appuntamenti dell'utente usando l'azione Vuex mappata
+    this.fetchUserAppointmentsAction(); // Il nome che abbiamo dato nell'helper mapActions
   },
   watch: {
+    // Watcher per la forza della password (invariato)
     "editedUser.newPassword": function (newVal) {
-      // Simple password strength checker
       if (!newVal) {
         this.passwordStrengthClass = "";
       } else if (newVal.length < 6) {
@@ -228,54 +321,100 @@ export default {
         this.passwordStrengthClass = "strength-strong";
       }
     },
+
+    // Watcher per sincronizzare this.user con lo store Vuex (opzionale ma utile)
+    vuexUser: {
+      handler(newUser) {
+        if (newUser && newUser._id) {
+          console.log(
+            "[UserProfile Watch vuexUser] Vuex user changed, updating local user state.",
+            newUser
+          );
+          this.user = { ...newUser }; // Aggiorna la copia locale
+          if (this.isEditing) {
+            // Se in modifica, aggiorna anche il form
+            this.resetEditForm();
+          }
+        } else if (
+          !newUser &&
+          (localStorage.getItem("user") || sessionStorage.getItem("user"))
+        ) {
+          // Se vuexUser è null ma c'è ancora in localStorage, potrebbe essere un logout non completo
+          // o un caricamento iniziale. loadUserProfile() dovrebbe gestire questo.
+        }
+      },
+      immediate: true, // Esegui subito al mount per sincronizzare
+      deep: true,
+    },
   },
   methods: {
+    // Mappa le azioni Vuex necessarie
+    ...mapActions("auth", {
+      vuexLogoutAction: "logout", // Azione logout dallo store auth
+    }),
+    ...mapActions("appointments", {
+      fetchUserAppointmentsAction: "fetchUserAppointments", // Per caricare gli appuntamenti
+      cancelUserAppointmentAction: "cancelUserAppointment", // Per cancellare un appuntamento
+      clearAppointmentsErrorAction: "clearAppointmentErrors", // Per pulire errori specifici degli appuntamenti
+    }),
+
+    // Caricamento Profilo Utente
     async loadUserProfile() {
-      this.isLoading = true;
-      try {
-        // Retrieve user from local storage first
+      this.isLoadingProfile = true;
+      let userToLoad = null;
+
+      // 1. Prova a prendere l'utente dallo store Vuex (fonte più affidabile dopo login)
+      if (this.vuexUser && this.vuexUser._id) {
+        console.log(
+          "[UserProfile loadUserProfile] Using user data from Vuex store."
+        );
+        userToLoad = { ...this.vuexUser };
+      } else {
+        // 2. Se non c'è nello store, prova localStorage (come fallback o per primo caricamento)
         const storedUser =
           localStorage.getItem("user") || sessionStorage.getItem("user");
-
-        if (!storedUser) {
-          // Redirect to login if no user is found
-          this.$router.push("/");
-          return;
-        }
-
-        const userData = JSON.parse(storedUser);
-
-        // Fetch the latest user data from the server
-        const response = await fetch(
-          `${this.backendUrl}/api/users/${userData._id}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+        if (storedUser) {
+          console.log(
+            "[UserProfile loadUserProfile] User not in Vuex, found in localStorage. Attempting parse."
+          );
+          try {
+            userToLoad = JSON.parse(storedUser);
+          } catch (e) {
+            console.error("Error parsing stored user from localStorage:", e);
+            localStorage.removeItem("user");
+            sessionStorage.removeItem("user");
+            this.$router.push("/");
+            return; // Reindirizza se i dati sono corrotti
           }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch user profile");
         }
-
-        const freshUserData = await response.json();
-        this.user = freshUserData;
-
-        // Initialize edited user with current values
-        this.resetEditForm();
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      } finally {
-        this.isLoading = false;
       }
+
+      if (userToLoad && userToLoad._id) {
+        // 3. Opzionale: ricarica i dati dal backend per avere la versione più fresca
+        //    (Sconsigliato se lo store Vuex è già la fonte di verità dopo il login)
+        //    Per ora, usiamo quello che abbiamo.
+        console.log(
+          "[UserProfile loadUserProfile] User data to use:",
+          userToLoad
+        );
+        this.user = userToLoad;
+        this.resetEditForm();
+      } else {
+        console.warn(
+          "[UserProfile loadUserProfile] No user data found in Vuex or localStorage. Redirecting to login."
+        );
+        // Se l'utente non è nello store E non è in localStorage, reindirizza al login
+        this.$router.push("/");
+        this.isLoadingProfile = false;
+        return;
+      }
+      this.isLoadingProfile = false;
     },
 
     resetEditForm() {
       this.editedUser = {
-        name: this.user.name,
-        email: this.user.email,
+        name: this.user.name || "",
+        email: this.user.email || "",
         currentPassword: "",
         newPassword: "",
       };
@@ -283,94 +422,159 @@ export default {
 
     startEditing() {
       this.isEditing = true;
-      this.updateError = "";
-      this.updateSuccess = "";
-      this.resetEditForm();
+      this.updateProfileError = "";
+      this.updateProfileSuccess = "";
+      this.resetEditForm(); // Assicura che il form parta con i dati attuali
     },
 
     cancelEditing() {
       this.isEditing = false;
-      this.resetEditForm();
+      this.resetEditForm(); // Resetta eventuali modifiche non salvate
     },
 
-    async updateProfile() {
-      this.isSubmitting = true;
-      this.updateError = "";
-      this.updateSuccess = "";
+    // Aggiorna Profilo Utente
+    async handleUpdateProfile() {
+      this.isSubmittingProfile = true;
+      this.updateProfileError = "";
+      this.updateProfileSuccess = "";
+
+      // Prepara i dati da inviare (solo quelli che possono essere modificati)
+      const updatePayload = {
+        name: this.editedUser.name,
+      };
+      if (this.user.authProvider === "local") {
+        if (
+          this.editedUser.email &&
+          this.editedUser.email !== this.user.email
+        ) {
+          updatePayload.email = this.editedUser.email;
+        }
+        if (this.editedUser.newPassword) {
+          if (!this.editedUser.currentPassword) {
+            this.updateProfileError =
+              "Current password is required to set a new password.";
+            this.isSubmittingProfile = false;
+            return;
+          }
+          updatePayload.currentPassword = this.editedUser.currentPassword;
+          updatePayload.newPassword = this.editedUser.newPassword;
+        }
+      }
 
       try {
-        // Validate form
-        if (!this.editedUser.name) {
-          throw new Error("Name is required");
-        }
-
-        if (this.user.authProvider === "local") {
-          if (!this.editedUser.email) {
-            throw new Error("Email is required");
-          }
-
-          // If setting a new password, current password is required
-          if (this.editedUser.newPassword && !this.editedUser.currentPassword) {
-            throw new Error(
-              "Current password is required to set a new password"
-            );
-          }
-        }
-
-        // SOLUZIONE TEMPORANEA: Aggiorna solo i dati locali
         console.log(
-          "Backend update endpoint not available, updating locally only"
+          "[UserProfile handleUpdateProfile] Attempting to update profile via API. Payload:",
+          {
+            ...updatePayload,
+            currentPassword: "[HIDDEN]",
+            newPassword: "[HIDDEN]",
+          }
+        );
+        // --- USARE CHIAMATA API REALE ---
+        // TODO: Implementare un'azione Vuex 'auth/updateUserProfile' che chiami un service
+        //       che a sua volta chiami PUT /api/users/:id
+        // Esempio: const updatedUser = await this.$store.dispatch('auth/updateUserProfile', updatePayload);
+        // Per ora, simuliamo la risposta e aggiorniamo localmente
+        const response = await fetch(
+          `${this.backendUrl}/api/users/${this.user._id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type":
+                "application/json" /*, 'Authorization': `Bearer ${this.$store.state.auth.token}` // SE USI JWT */,
+            },
+            body: JSON.stringify(updatePayload),
+          }
         );
 
-        // Prepara i dati aggiornati
-        const updatedUserData = {
-          ...this.user,
-          name: this.editedUser.name,
-        };
-
-        if (this.user.authProvider === "local") {
-          updatedUserData.email = this.editedUser.email;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to update profile.");
         }
+        const freshUserData = await response.json();
+        // -----------------------------
 
-        // Aggiorna lo storage locale
-        localStorage.setItem("user", JSON.stringify(updatedUserData));
+        // Aggiorna lo store Vuex (se l'API ha successo)
+        this.$store.commit("auth/SET_USER", freshUserData); // Assicurati che auth/SET_USER esista e aggiorni localStorage
 
-        // Aggiorna i dati nel componente
-        this.user = updatedUserData;
-        this.updateSuccess =
-          "Profile updated locally. Note: Server update not available.";
-
-        // Esci dalla modalità di modifica dopo un breve ritardo
-        setTimeout(() => {
-          this.isEditing = false;
-        }, 1500);
+        // this.user viene aggiornato dal watcher su vuexUser
+        this.updateProfileSuccess = "Profile updated successfully!";
+        this.isEditing = false;
       } catch (error) {
-        console.error("Error updating profile:", error);
-        this.updateError =
+        console.error("[ERROR] Error updating profile:", error);
+        this.updateProfileError =
           error.message || "Failed to update profile. Please try again.";
       } finally {
-        this.isSubmitting = false;
+        this.isSubmittingProfile = false;
       }
     },
 
+    // Formattazione Data
     formatDate(dateString) {
       if (!dateString) return "Unknown";
-
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(date);
+      try {
+        const date = new Date(dateString);
+        // Specifica opzioni per un formato più standard
+        return new Intl.DateTimeFormat("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "2-digit",
+        }).format(date);
+      } catch {
+        return dateString;
+      }
     },
 
-    logout() {
-      // Clear stored user data
-      localStorage.removeItem("user");
-      sessionStorage.removeItem("user");
-
-      // Redirect to login page
+    // Logout: chiama l'azione Vuex
+    handleLogout() {
+      console.log("[UserProfile] Logging out via Vuex action...");
+      this.vuexLogoutAction(); // Chiama l'azione 'auth/logout' mappata
+      // Il redirect dovrebbe essere gestito da un navigation guard che osserva lo stato di autenticazione.
+      // Se l'utente non è più autenticato, il guard lo reindirizza.
+      // Se non hai un guard, un redirect qui è un fallback.
       this.$router.push("/");
+    },
+
+    // --- METODI PER GLI APPUNTAMENTI ---
+    // Chiama l'azione mappata per cancellare un appuntamento
+    async handleCancelAppointment(appointmentId) {
+      if (!confirm("Are you sure you want to cancel this appointment?")) return;
+      this.isCancelling = appointmentId; // Per feedback UI sul bottone specifico
+      this.clearAppointmentsErrorAction(); // Pulisce errori precedenti dallo store appointments
+
+      try {
+        console.log(
+          `[UserProfile] Attempting to cancel appointment ID: ${appointmentId} via Vuex action.`
+        );
+        await this.cancelUserAppointmentAction(appointmentId); // Chiama l'azione mappata
+        alert("Appointment cancelled successfully."); // Semplice feedback
+        // La lista si aggiornerà perché l'azione `cancelUserAppointmentAction` fa commit di `REMOVE_APPOINTMENT`
+      } catch (error) {
+        // L'errore è già stato loggato dall'azione e dovrebbe essere in this.appointmentsError
+        console.error(
+          "[UserProfile] Failed to cancel appointment (error caught from action):",
+          error
+        );
+        alert(
+          `Failed to cancel appointment: ${
+            this.appointmentsError || "Please try again."
+          }`
+        );
+      } finally {
+        this.isCancelling = null; // Resetta lo stato di "cancellazione in corso"
+      }
+    },
+
+    // Helper per verificare se un appuntamento è nel futuro
+    isFutureAppointment(dateString, timeString) {
+      if (!dateString || !timeString) return false;
+      try {
+        // Assicura che la data venga interpretata correttamente (aggiungendo ora se manca)
+        const appointmentDateTime = new Date(`${dateString}T${timeString}:00`); // Assumendo HH:MM
+        return appointmentDateTime > new Date(); // Confronta con ora attuale
+      } catch {
+        return false; // Considera non futuro se la data/ora non sono valide
+      }
     },
   },
 };

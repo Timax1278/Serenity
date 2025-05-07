@@ -2,28 +2,27 @@
 import { createStore } from "vuex";
 
 // --- IMPORTA TUTTI I TUOI MODULI ---
-import auth from "./modules/auth"; // <--- IMPORTANTE: Assicurati che l'import sia corretto
+import auth from "./modules/auth";
 import users from "./modules/users";
-import groups from "./modules/groups"; // <--- IMPORTANTE: Assicurati che sia importato
-import appointments from "./modules/appointments";
+import groups from "./modules/groups";
+import appointments from "./modules/appointments"; // <-- Assicurati che questo file esista e sia importato
 import meditation from "./modules/meditation";
 import shop from "./modules/shop";
-// Importa il modulo presence se usi Socket.IO con Vuex
-// import presence from "./modules/presence";
+// import presence from "./modules/presence"; // Commentato se non lo usi
 
 // Crea lo store usando createStore
 const store = createStore({
   modules: {
     // --- AGGIUNGI TUTTI I MODULI QUI ---
-    auth, // <--- IMPORTANTE: Assicurati che 'auth' sia qui
+    auth,
     users,
-    groups, // <--- IMPORTANTE: Assicurati che 'groups' sia qui
-    appointments,
+    groups,
+    appointments, // <-- Assicurati che sia aggiunto qui all'oggetto modules
     meditation,
     shop,
-    // presence,   // Aggiungi se usi Socket.IO con Vuex
+    // presence,   // Commentato se non lo usi
   },
-  // Puoi aggiungere qui state, mutations, actions, getters globali se necessario
+  // State, Mutations, Actions, Getters globali (generalmente non servono se usi moduli ben strutturati)
   // state: {},
   // mutations: {},
   // actions: {},

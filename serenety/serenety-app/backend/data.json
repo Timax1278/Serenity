@@ -186,5 +186,101 @@
       "timestamp": "2025-05-06T18:08:16.602Z",
       "_id": "1746554896602"
     }
+  ],
+  "services": [
+    {
+      "_id": "serv_stress_teen",
+      "name": "Gestione dello Stress per Adolescenti",
+      "description": "Incontri individuali per sviluppare strategie efficaci per affrontare lo stress scolastico e personale.",
+      "targetAudience": "Adolescenti",
+      "tags": [
+        "stress",
+        "scuola",
+        "adolescenti",
+        "coping"
+      ],
+      "associatedProfessionalIds": [
+        "prof_rossi"
+      ],
+      "defaultDuration": 50
+    },
+    {
+      "_id": "serv_ansia_sociale",
+      "name": "Supporto per Ansia Sociale",
+      "description": "Sessioni mirate ad aumentare la sicurezza e ridurre l'ansia nelle interazioni sociali.",
+      "targetAudience": "Adolescenti",
+      "tags": [
+        "ansia",
+        "sociale",
+        "timidezza",
+        "fiducia"
+      ],
+      "associatedProfessionalIds": [
+        "prof_bianchi",
+        "prof_rossi"
+      ],
+      "defaultDuration": 60
+    },
+    {
+      "name": "asd",
+      "description": "asdasd",
+      "targetAudience": "asdasd",
+      "tags": [
+        "asdasd"
+      ],
+      "associatedProfessionalIds": [
+        "asdasd"
+      ],
+      "defaultDuration": 5,
+      "_id": "1746603035879"
+    }
+  ],
+  "professionals": [
+    {
+      "_id": "prof_rossi",
+      "name": "Dott.ssa Elena Rossi",
+      "specialization": "Psicologa Clinica - Età Evolutiva",
+      "bio": "Specializzata nel trattamento di ansia, depressione e difficoltà relazionali negli adolescenti.",
+      "profileImageUrl": null,
+      "offeredServiceIds": [
+        "serv_stress_teen",
+        "serv_ansia_sociale"
+      ]
+    },
+    {
+      "_id": "prof_bianchi",
+      "name": "Dott. Marco Bianchi",
+      "specialization": "Terapeuta Cognitivo-Comportamentale",
+      "bio": "Approccio pratico per modificare pensieri e comportamenti disfunzionali.",
+      "profileImageUrl": null,
+      "offeredServiceIds": [
+        "serv_ansia_sociale"
+      ]
+    }
+  ],
+  "appointments": [
+    {
+      "userId": "1746462855667",
+      "professionalId": "prof_rossi",
+      "serviceId": "serv_stress_teen",
+      "date": "2025-05-12",
+      "time": "09:00",
+      "durationMinutes": 50,
+      "serviceName": "Gestione dello Stress per Adolescenti",
+      "professionalName": "Dott.ssa Elena Rossi",
+      "status": "confirmed",
+      "createdAt": "2025-05-07T08:33:03.780Z",
+      "_id": "1746606783780"
+    }
+  ],
+  "availabilities": [
+    {
+      "_id": "avail_rossi_lun_mat",
+      "professionalId": "prof_rossi",
+      "dayOfWeek": 1,
+      "startTime": "09:00",
+      "endTime": "12:00",
+      "slotDurationMinutes": 60
+    }
   ]
 }
