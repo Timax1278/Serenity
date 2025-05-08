@@ -175,138 +175,279 @@ const getLicenseName = (licenseUrl) => {
 </script>
 
 <style scoped>
-/* Stili (invariati, ma assicurati che siano presenti) */
 .meditation-library {
-  padding: 20px;
-  padding-bottom: 90px;
-  box-sizing: border-box;
-}
-.filters {
-  margin-bottom: 20px;
-  flex-wrap: wrap;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
   align-items: center;
-}
-.filters span {
-  margin-right: 10px;
-  font-weight: 500;
-}
-.filters button {
-  padding: 6px 12px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  border-radius: 15px;
-  transition: all 0.2s ease-in-out;
-  font-size: 0.9em;
-}
-.filters button:hover {
-  background-color: #eee;
-}
-.filters button.active {
-  background-color: #3498db;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-color: #3498db;
-}
-.loading-indicator {
-  text-align: center;
-  padding: 30px;
-  color: #555;
-  font-style: italic;
-}
-.error-message {
-  color: #e74c3c;
-  background-color: #fdd;
-  border: 1px solid #e74c3c;
-  padding: 10px 15px;
-  margin-bottom: 15px;
-  border-radius: 4px;
-}
-.error-message button {
-  margin-left: 15px;
-  padding: 3px 8px;
-  font-size: 0.85em;
-}
-.track-list {
-  display: grid;
-  gap: 15px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-}
-.track-item {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  background-color: #fff;
   position: relative;
   overflow: hidden;
 }
+
+/* Background animation - reusing from main styles */
+.meditation-library::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 10%,
+    transparent 70%
+  );
+  z-index: 0;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Filters styling */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 900px;
+  position: relative;
+  z-index: 1;
+}
+
+.filters span {
+  display: flex;
+  align-items: center;
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+
+.filters button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.filters button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.filters button.active {
+  background: rgba(67, 233, 123, 0.3);
+  border-color: #43e97b;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(67, 233, 123, 0.3);
+}
+
+/* Loading and error states */
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.loading-indicator::after {
+  content: "";
+  width: 20px;
+  height: 20px;
+  margin-left: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  background: rgba(244, 67, 54, 0.2);
+  color: #ffcdd2;
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 600px;
+  margin: 1rem auto;
+  position: relative;
+  z-index: 1;
+}
+
+.error-message button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.error-message button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Track list styling */
+.track-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  position: relative;
+  z-index: 1;
+}
+
+.track-item {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+}
+
 .track-item:hover {
-  background-color: #f7f7f7;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(31, 38, 135, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
 }
+
 .cover-art {
-  width: 50px;
-  height: 50px;
+  width: 100%;
+  height: 180px;
   object-fit: cover;
-  margin-right: 15px;
-  border-radius: 4px;
-  background-color: #eee;
-  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .track-info {
-  flex-grow: 1;
-  overflow: hidden;
-  min-width: 0;
+  padding: 1.2rem;
 }
+
 .track-info h2 {
-  font-size: 1.05em;
-  margin: 0 0 3px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #333;
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+  color: white;
 }
+
 .track-info p {
-  font-size: 0.9em;
-  color: #666;
-  margin: 0 0 5px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0.3rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
 }
+
 .track-info span {
-  font-size: 0.8em;
-  color: #777;
   display: block;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.5rem;
 }
+
 .license-info {
-  font-size: 0.75em;
-  color: #888;
-  margin-top: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.8rem !important;
+  margin-top: 0.8rem !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
+
 .license-info a {
-  color: #555;
+  color: rgba(67, 233, 123, 0.9);
   text-decoration: none;
+  transition: all 0.2s ease;
 }
+
 .license-info a:hover {
+  color: rgba(67, 233, 123, 1);
   text-decoration: underline;
 }
+
 .playing-indicator {
-  margin-left: 10px;
-  font-size: 0.8em;
-  color: #27ae60;
-  flex-shrink: 0;
-  background-color: rgba(230, 255, 230, 0.8);
-  padding: 2px 5px;
-  border-radius: 3px;
-  white-space: nowrap;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(67, 233, 123, 0.8);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Audio Player Component (basic styles assuming it has its own styling) */
+.audio-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(26, 32, 58, 0.9);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  z-index: 100;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .meditation-library {
+    padding: 1.5rem 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .track-list {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .filters span {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Empty states */
+.meditation-library p {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin: 2rem 0;
+  max-width: 600px;
+  position: relative;
+  z-index: 1;
 }
 </style>

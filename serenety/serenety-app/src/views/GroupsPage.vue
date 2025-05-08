@@ -6,9 +6,6 @@
 
     <!-- Sezione Admin (Opzionale) -->
     <!-- DEBUG: Controlla il valore di isAdmin qui -->
-    <p style="background: lightyellow; padding: 5px">
-      [DEBUG] isAdmin value in template: {{ isAdmin }}
-    </p>
     <div v-if="isAdmin" class="admin-section">
       <h2>Admin: Create Group</h2>
       <form @submit.prevent="handleCreateGroup">
@@ -37,11 +34,7 @@
         <button type="submit" :disabled="isLoading">Create Group</button>
       </form>
     </div>
-    <div v-else>
-      <p style="background: lightcoral; color: white; padding: 5px">
-        [DEBUG] Admin section is hidden because isAdmin is false.
-      </p>
-    </div>
+    <div v-else></div>
 
     <ul v-if="groups.length > 0" class="groups-list">
       <li v-for="group in groups" :key="group._id" class="group-item">
@@ -191,57 +184,344 @@ const handleDeleteGroup = (groupId) => {
 </script>
 
 <style scoped>
-/* ... (i tuoi stili) ... */
+.groups-list-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background animation */
+.groups-list-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.circles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  z-index: -1;
+}
+
+.circles li {
+  position: absolute;
+  display: block;
+  list-style: none;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  animation: animate 25s linear infinite;
+  bottom: -150px;
+  border-radius: 50%;
+}
+
+.circles li:nth-child(1) {
+  left: 25%;
+  width: 80px;
+  height: 80px;
+  animation-delay: 0s;
+}
+
+.circles li:nth-child(2) {
+  left: 10%;
+  width: 20px;
+  height: 20px;
+  animation-delay: 2s;
+  animation-duration: 12s;
+}
+
+.circles li:nth-child(3) {
+  left: 70%;
+  width: 20px;
+  height: 20px;
+  animation-delay: 4s;
+}
+
+.circles li:nth-child(4) {
+  left: 40%;
+  width: 60px;
+  height: 60px;
+  animation-delay: 0s;
+  animation-duration: 18s;
+}
+
+.circles li:nth-child(5) {
+  left: 65%;
+  width: 20px;
+  height: 20px;
+  animation-delay: 0s;
+}
+
+.circles li:nth-child(6) {
+  left: 75%;
+  width: 110px;
+  height: 110px;
+  animation-delay: 3s;
+}
+
+.circles li:nth-child(7) {
+  left: 35%;
+  width: 150px;
+  height: 150px;
+  animation-delay: 7s;
+}
+
+.circles li:nth-child(8) {
+  left: 50%;
+  width: 25px;
+  height: 25px;
+  animation-delay: 15s;
+  animation-duration: 45s;
+}
+
+.circles li:nth-child(9) {
+  left: 20%;
+  width: 15px;
+  height: 15px;
+  animation-delay: 2s;
+  animation-duration: 35s;
+}
+
+.circles li:nth-child(10) {
+  left: 85%;
+  width: 150px;
+  height: 150px;
+  animation-delay: 0s;
+  animation-duration: 11s;
+}
+
+@keyframes animate {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+    border-radius: 0;
+  }
+
+  100% {
+    transform: translateY(-1000px) rotate(720deg);
+    opacity: 0;
+    border-radius: 50%;
+  }
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
 .error-message {
-  color: red;
-  margin-bottom: 15px;
+  padding: 0.8rem;
+  border-radius: 8px;
+  text-align: center;
+  margin: 1rem 0;
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #ffcdd2;
+  width: 100%;
+  max-width: 700px;
 }
+
+/* Admin section */
 .admin-section {
-  background-color: #eee;
-  padding: 15px;
-  margin-bottom: 20px;
-  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: 2rem;
 }
+
+.admin-section h2 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
 .admin-section form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1rem;
 }
+
 .admin-section input,
 .admin-section textarea {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s;
 }
+
+.admin-section textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.admin-section input:focus,
+.admin-section textarea:focus {
+  outline: none;
+  border-color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.admin-section button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
+}
+
+.admin-section button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+}
+
+.admin-section button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Groups list */
 .groups-list {
+  width: 100%;
+  max-width: 700px;
   list-style: none;
   padding: 0;
-}
-.group-item {
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 5px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1.5rem;
 }
+
+.group-item {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.group-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(31, 38, 135, 0.3);
+}
+
 .group-item a {
+  color: white;
   text-decoration: none;
-  color: inherit;
-  flex-grow: 1;
+  display: block;
 }
+
+.group-item h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.group-item p {
+  margin-bottom: 1rem;
+  opacity: 0.9;
+}
+
+.group-item span {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
 .delete-btn {
-  background-color: #e74c3c;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(244, 67, 54, 0.7);
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 3px;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  margin-left: 15px;
+  transition: all 0.3s ease;
 }
+
+.delete-btn:hover:not(:disabled) {
+  background: rgba(244, 67, 54, 1);
+  transform: scale(1.1);
+}
+
 .delete-btn:disabled {
-  background-color: #ccc;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading state */
+[v-cloak] {
+  display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .groups-list-page {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .admin-section,
+  .group-item {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .admin-section input,
+  .admin-section textarea {
+    padding: 0.8rem;
+  }
 }
 </style>

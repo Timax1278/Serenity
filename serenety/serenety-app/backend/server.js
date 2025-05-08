@@ -645,6 +645,62 @@ app.post('/api/groups/:groupId/join', /* verifyToken, */ async (req, res) => {
   }
 });
 
+// Invia un messaggio in un gruppo
+// TODO: Proteggere con verifyToken quando implementato e usare req.user!
+app.post('/api/groups/:groupId/messages', async (req, res) => {
+  try {
+      const { groupId } = req.params;
+      const { text } = req.body;
+      // !!! DEVI ottenere userId e userName dall'utente autenticato (req.user) !!!
+      const userId = req.body.userId || 'placeholderUserId-' + Date.now(); // Placeholder diverso e più unico
+      const userName = req.body.userName || 'User Placeholder'; // Placeholder insicuro!
+
+      if (userId.startsWith('placeholderUserId')) { // Controllo placeholder
+          console.warn("WARN: Using placeholder User for sending message! Implement JWT auth.");
+          // In un sistema reale con JWT, se req.user non esiste, restituiresti 401
+          // return res.status(401).json({ message: "Authentication required" });
+      }
+      if (!text || text.trim() === '') { // Aggiunto trim() per controllo messaggio vuoto
+          return res.status(400).json({ message: 'Message text cannot be empty' });
+      }
+
+      const group = await dataStore.findOne('groups', { _id: groupId });
+      if (!group) {
+          console.log(`[API MSG POST] Group not found: ${groupId}`);
+          return res.status(404).json({ message: 'Group not found' });
+      }
+
+      // Verifica se l'utente è membro del gruppo (IMPORTANTE!)
+      // Se usi placeholder, questo controllo potrebbe fallire!
+      if (!group.members.includes(userId)) {
+           console.warn(`[API MSG POST] User ${userId} is not a member of group ${groupId}. Message rejected.`);
+           return res.status(403).json({ message: 'You must be a member of the group to send messages' });
+      }
+
+      console.log(`[API MSG POST] User ${userName}(${userId}) sending message to group ${groupId}`);
+      // Crea e salva il messaggio
+      const newMessage = await dataStore.insert('chatMessages', {
+          groupId,
+          userId,
+          userName, // Denormalizzato per comodità
+          text: text.trim(), // Salva messaggio trimmato
+          timestamp: new Date().toISOString(),
+      });
+
+      // Invia il nuovo messaggio via WebSocket a tutti i membri del gruppo connessi
+      // Assicurati che broadcastGroupUpdate sia definita e funzioni
+      console.log(`[API MSG POST] Message saved (ID: ${newMessage._id}), attempting to broadcast...`);
+      broadcastGroupUpdate(groupId, { type: 'new_message', message: newMessage });
+
+      // Rispondi al client HTTP che ha inviato il POST
+      res.status(201).json(newMessage);
+
+  } catch (error) {
+      console.error('[ERROR] Error sending message:', error);
+      res.status(500).json({ error: 'Failed to send message due to server error.' });
+  }
+});
+
 // Lascia un gruppo
 // TODO: Proteggere con verifyToken quando implementato e usare req.user.id
 app.post('/api/groups/:groupId/leave', /* verifyToken, */ async (req, res) => {

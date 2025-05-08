@@ -398,140 +398,260 @@ const formatDateForDisplay = (dateString) => {
 </script>
 
 <style scoped>
-/* Stili CSS (come forniti in precedenza) */
+/* Modal Appointment Booking CSS */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(3px);
 }
+
 .modal-content {
-  background-color: #fff;
-  padding: 30px 40px;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   width: 90%;
-  max-width: 600px;
-  max-height: 85vh; /* Aumentata leggermente altezza max */
-  overflow-y: auto;
+  max-width: 500px;
   position: relative;
+  color: white;
+  max-height: 90vh;
+  overflow-y: auto;
 }
+
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 15px;
+  top: 1rem;
+  right: 1rem;
   background: none;
   border: none;
-  font-size: 1.8em;
+  color: white;
+  font-size: 1.5rem;
   cursor: pointer;
-  color: #888;
-  line-height: 1;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
+
 .close-button:hover {
-  color: #333;
+  background-color: rgba(255, 255, 255, 0.2);
 }
+
 h2 {
   margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
+  font-size: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
 }
-h3 {
-  margin-top: 25px;
-  margin-bottom: 10px;
-  color: #555;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
-  font-size: 1.1em;
-}
+
 .step {
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
 }
+
+h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 select,
 input[type="date"] {
   width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1em;
-  box-sizing: border-box;
+  padding: 0.8rem 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s;
+  margin-bottom: 1rem;
+  -webkit-appearance: none;
+  appearance: none;
 }
-.loading-indicator.small {
-  font-style: italic;
-  color: #666;
-  font-size: 0.9em;
-  padding: 10px 0;
+
+/* Custom arrow for selects */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 30px;
 }
-.error-message {
-  /* Stile errore generico */
-  color: #e74c3c;
-  background-color: #fdd;
-  border: 1px solid #e74c3c;
-  padding: 10px 15px;
-  margin-top: 10px;
-  border-radius: 4px;
-  font-size: 0.9em;
+
+select:focus,
+input[type="date"]:focus {
+  outline: none;
+  border-color: white;
+  background-color: rgba(255, 255, 255, 0.2);
 }
-.error-message.small {
-  padding: 8px;
-  font-size: 0.85em;
-} /* Stile errore più piccolo */
+
+/* Calendar icon color fix for date inputs */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+}
+
 .slot-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 10px;
+  margin-bottom: 1rem;
 }
+
 .slot-button {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  border-radius: 4px;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 30px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
+
 .slot-button:hover {
-  background-color: #eee;
+  background-color: rgba(255, 255, 255, 0.2);
 }
+
 .slot-button.selected {
-  background-color: #3498db;
-  color: white;
-  border-color: #3498db;
-  font-weight: bold;
-}
-.confirmation p {
-  background-color: #e8f4f8;
-  border-left: 4px solid #3498db;
-  padding: 15px;
-  margin-bottom: 15px;
-  font-size: 0.95em;
-  line-height: 1.5;
-}
-.confirmation strong {
-  color: #2980b9;
-}
-.confirm-button {
-  background-color: #2ecc71;
-  color: white;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
   border: none;
-  padding: 12px 20px;
-  border-radius: 5px;
+  font-weight: 500;
+}
+
+.confirmation {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.confirm-button {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #1a1a1a;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
   cursor: pointer;
-  font-size: 1em;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  width: 100%;
+  margin-top: 1rem;
 }
-.confirm-button:hover:not(:disabled) {
-  background-color: #27ae60;
+
+.confirm-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
 }
+
 .confirm-button:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
   opacity: 0.7;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #a8a8a8 0%, #d3d3d3 100%);
+  transform: none;
+  box-shadow: none;
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.loading-indicator.small {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #ffcdd2;
+  padding: 0.8rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.error-message.small {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Animation for modal appearance */
+.modal-overlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .slot-list {
+    gap: 8px;
+  }
+
+  .slot-button {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
 }
 </style>

@@ -34,118 +34,7 @@
     }
   ],
   "chatMessages": [
-    {
-      "groupId": "1746463492429",
-      "userId": "1746461163283",
-      "userName": "Administrator",
-      "text": "cioaooo",
-      "timestamp": "2025-05-05T16:45:03.075Z",
-      "_id": "1746463503075"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "cioa",
-      "timestamp": "2025-05-05T16:45:33.379Z",
-      "_id": "1746463533379"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "helou",
-      "timestamp": "2025-05-05T17:35:33.811Z",
-      "_id": "1746466533811"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "cioa",
-      "timestamp": "2025-05-05T17:40:56.487Z",
-      "_id": "1746466856487"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "prova1",
-      "timestamp": "2025-05-05T17:41:25.461Z",
-      "_id": "1746466885461"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746461163283",
-      "userName": "Administrator",
-      "text": "ciao",
-      "timestamp": "2025-05-05T17:59:34.202Z",
-      "_id": "1746467974202"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746461163283",
-      "userName": "Administrator",
-      "text": "come va",
-      "timestamp": "2025-05-05T17:59:44.121Z",
-      "_id": "1746467984121"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "ciaooooo",
-      "timestamp": "2025-05-05T18:00:04.949Z",
-      "_id": "1746468004949"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746461163283",
-      "userName": "Administrator",
-      "text": "k,dsifyow8eydfw8or",
-      "timestamp": "2025-05-05T18:00:34.420Z",
-      "_id": "1746468034420"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "auighfpaiusdhfa",
-      "timestamp": "2025-05-05T18:06:55.367Z",
-      "_id": "1746468415367"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "asmhvas,jc",
-      "timestamp": "2025-05-06T06:09:50.106Z",
-      "_id": "1746511790106"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746461163283",
-      "userName": "Administrator",
-      "text": "asdasd",
-      "timestamp": "2025-05-06T06:09:56.826Z",
-      "_id": "1746511796826"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746461163283",
-      "userName": "Administrator",
-      "text": "asdasd",
-      "timestamp": "2025-05-06T06:10:03.170Z",
-      "_id": "1746511803170"
-    },
-    {
-      "groupId": "1746463492429",
-      "userId": "1746462855667",
-      "userName": "Tymofiy Davydov",
-      "text": "asd",
-      "timestamp": "2025-05-06T06:10:07.814Z",
-      "_id": "1746511807814"
-    }
+    
   ],
   "meditations": [
     {
@@ -271,6 +160,19 @@
       "status": "confirmed",
       "createdAt": "2025-05-07T08:33:03.780Z",
       "_id": "1746606783780"
+    },
+    {
+      "userId": "1746461163283",
+      "professionalId": "prof_rossi",
+      "serviceId": "serv_stress_teen",
+      "date": "2025-05-12",
+      "time": "11:00",
+      "durationMinutes": 50,
+      "serviceName": "Gestione dello Stress per Adolescenti",
+      "professionalName": "Dott.ssa Elena Rossi",
+      "status": "confirmed",
+      "createdAt": "2025-05-08T13:51:45.782Z",
+      "_id": "1746712305782"
     }
   ],
   "availabilities": [

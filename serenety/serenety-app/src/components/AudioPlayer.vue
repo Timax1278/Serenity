@@ -351,170 +351,256 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Stili CSS per il player (come forniti in precedenza) */
 .audio-player-bar {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #f0f2f5;
-  padding: 10px 20px;
-  border-top: 1px solid #dcdcdc;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  box-sizing: border-box;
-}
-.audio-player-placeholder {
-  position: sticky;
+  position: fixed;
   bottom: 0;
   left: 0;
-  width: 100%;
-  background-color: #f8f9fa;
-  padding: 20px;
-  text-align: center;
-  color: #6c757d;
-  border-top: 1px solid #e9ecef;
-  box-sizing: border-box;
+  right: 0;
+  height: 80px;
+  padding: 0 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 -4px 16px rgba(31, 38, 135, 0.2);
+  z-index: 1000;
+  color: white;
 }
+
+/* Dettagli della traccia */
 .track-details {
   display: flex;
   align-items: center;
-  flex-shrink: 1;
-  min-width: 150px;
-  margin-right: 20px;
-  overflow: hidden; /* Aggiunto per contenere testo lungo */
+  width: 25%;
+  min-width: 180px;
 }
+
 .player-cover-art {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  margin-right: 10px;
-  border-radius: 4px;
-  flex-shrink: 0; /* Evita che l'immagine si restringa */
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  margin-right: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
-.track-details > div {
-  /* Contenitore per titolo/artista */
-  overflow: hidden; /* Nasconde overflow testo */
-}
+
 .player-title {
-  font-weight: bold;
-  font-size: 0.9em;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* max-width: 200px; */ /* Rimuovi max-width, lascia che flex gestisca */
+  max-width: 150px;
 }
+
 .player-artist {
-  font-size: 0.8em;
-  color: #555;
+  font-size: 0.8rem;
+  opacity: 0.8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* max-width: 200px; */ /* Rimuovi max-width */
+  max-width: 150px;
 }
+
+/* Controlli centrali */
 .player-controls {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex-grow: 1;
-  justify-content: center;
-  min-width: 250px; /* Ridotto leggermente */
+  width: 50%;
 }
+
 .control-button {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  font-size: 1.8em;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: white;
+  font-size: 1rem;
   cursor: pointer;
-  margin: 0 15px;
-  color: #333;
-  padding: 0;
-  line-height: 1;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
+
 .control-button:hover {
-  color: #007bff;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 }
+
 .time-controls {
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 400px;
-  margin: 0 10px;
+  gap: 8px;
 }
+
 .current-time,
 .duration-time {
-  font-size: 0.8em;
-  color: #555;
-  min-width: 35px;
-  text-align: center;
-  user-select: none; /* Evita selezione testo tempo */
+  font-size: 0.75rem;
+  opacity: 0.9;
+  min-width: 40px;
 }
+
 .progress-bar {
-  flex-grow: 1;
+  flex: 1;
   height: 5px;
-  cursor: pointer;
-  margin: 0 10px;
-  -webkit-appearance: none;
   appearance: none;
-  background: #ddd;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 5px;
   outline: none;
+  transition: height 0.2s ease;
 }
+
 .progress-bar::-webkit-slider-thumb {
-  -webkit-appearance: none;
   appearance: none;
   width: 12px;
   height: 12px;
-  background: #3498db;
   border-radius: 50%;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
   cursor: pointer;
+  transition: all 0.2s ease;
 }
+
 .progress-bar::-moz-range-thumb {
   width: 12px;
   height: 12px;
-  background: #3498db;
   border-radius: 50%;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
   cursor: pointer;
   border: none;
+  transition: all 0.2s ease;
 }
+
+.progress-bar:hover {
+  height: 8px;
+}
+
+.progress-bar:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.progress-bar:hover::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+/* Controlli volume */
 .volume-controls {
   display: flex;
   align-items: center;
-  min-width: 120px;
+  gap: 8px;
+  width: 20%;
+  min-width: 100px;
+  justify-content: flex-end;
 }
+
 .volume-controls span {
-  margin-right: 5px;
-  user-select: none;
+  font-size: 1.2rem;
+  opacity: 0.9;
 }
+
 .volume-slider {
   width: 80px;
   height: 4px;
-  cursor: pointer;
-  -webkit-appearance: none;
   appearance: none;
-  background: #ccc;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
   outline: none;
+  transition: all 0.2s ease;
 }
+
 .volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
   appearance: none;
   width: 10px;
   height: 10px;
-  background: #555;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
   cursor: pointer;
 }
+
 .volume-slider::-moz-range-thumb {
   width: 10px;
   height: 10px;
-  background: #555;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   border: none;
 }
-audio {
-  display: none;
+
+.volume-slider:hover {
+  height: 6px;
+}
+
+/* Placeholder quando non c'è nessuna traccia */
+.audio-player-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(5px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .track-details {
+    width: 30%;
+    min-width: 120px;
+  }
+
+  .player-title,
+  .player-artist {
+    max-width: 100px;
+  }
+
+  .player-controls {
+    width: 45%;
+  }
+
+  .volume-controls {
+    width: 15%;
+    min-width: 80px;
+  }
+
+  .volume-slider {
+    width: 60px;
+  }
+}
+
+@media (max-width: 576px) {
+  .audio-player-bar {
+    padding: 0 1rem;
+    height: 90px;
+    flex-wrap: wrap;
+  }
+
+  .track-details {
+    width: 50%;
+    margin-bottom: 5px;
+  }
+
+  .player-controls {
+    width: 100%;
+    order: 3;
+  }
+
+  .volume-controls {
+    width: 50%;
+    justify-content: flex-end;
+    margin-bottom: 5px;
+  }
 }
 </style>
